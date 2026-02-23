@@ -2,6 +2,8 @@
 # uninstall.sh - Manual uninstaller for claude-tmux-status
 set -eu
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT="$SCRIPT_DIR/scripts/claude_usage.py"
 BIN="${HOME}/.local/bin/claude-usage"
 TMUX_CONF="${HOME}/.tmux.conf"
 MARKER="# claude-tmux-status"
@@ -11,10 +13,11 @@ CACHE="${HOME}/.claude/tmux-rate-limit-cache.json"
 echo "=== claude-tmux-status uninstaller ==="
 
 # 1. Remove Stop hook from ~/.claude/settings.json
-if [ -x "$BIN" ]; then
-    python3 "$BIN" --uninstall-hook || true
+# Use the repo script directly so it always has --uninstall-hook support
+if [ -f "$SCRIPT" ]; then
+    python3 "$SCRIPT" --uninstall-hook || true
 else
-    echo "[skip] $BIN not found — skipping hook removal"
+    echo "[skip] $SCRIPT not found — skipping hook removal"
 fi
 
 # 2. Remove binary
