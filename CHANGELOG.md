@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.5.1] - 2026-02-23
+
+### Fixed
+- Staleness indicator (`[Xm ago]`, `[Xh ago]`, `[Xd ago]`) was displayed in Japanese (`前`) — changed to English
+- Updated all README files (EN/JA/ZH) to reflect the English-only display format
+
+---
+
 ## [0.5.0] - 2026-02-23
 
 ### Added

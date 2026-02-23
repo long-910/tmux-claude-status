@@ -321,9 +321,9 @@ def fmt_age(fetched_at):
         return " [--]"
     age = time.time() - fetched_at
     if age < 120:   return ""
-    if age < 3600:  return f" [{int(age/60)}m前]"
-    if age < 86400: return f" [{int(age/3600)}h前]"
-    return f" [{int(age/86400)}d前]"
+    if age < 3600:  return f" [{int(age/60)}m ago]"
+    if age < 86400: return f" [{int(age/3600)}h ago]"
+    return f" [{int(age/86400)}d ago]"
 
 
 def pct_bar(v, width=8):
