@@ -1,23 +1,31 @@
 # claude-tmux-status
 
-Claude Code のトークン使用量をリアルタイムで tmux ステータスバーに表示するツールです。
+Claude Code のトークン使用量を tmux ステータスバーにリアルタイム表示するツールです。
+**5時間ウィンドウ**（レート制限単位）・**本日**・**週間** の3軸で使用量とコストを表示します。
 
 ## 表示例
 
 ```
-🤖 in:26.3K out:63.0K $0.42  |  14:35 2026-02-23
+🤖 5h:20.2K $4.94 | day:$4.94 | 7d:$43.90  |  [CPU/MEM]  |  02:00 2026-02-23
 ```
+
+| 項目 | 意味 |
+|------|------|
+| `5h:20.2K` | 直近5時間のアウトプットトークン数（レート制限ウィンドウ） |
+| `$4.94` | 直近5時間の推定コスト |
+| `day:$4.94` | 本日の推定コスト |
+| `7d:$43.90` | 直近7日間の推定コスト |
 
 ## 仕組み
 
-`~/.claude/projects/**/*.jsonl` を読み込み、**本日分**のトークン使用量を集計します。
-tmux の `status-interval` に合わせて定期的に更新されます。
+`~/.claude/projects/**/*.jsonl` を読み込み、各時間ウィンドウのトークン使用量を集計します。
+Claude Code の**レート制限は5時間ローリングウィンドウ**に基づくため、それに合わせた表示を行います。
 
 ## 必要環境
 
 - Python 3.8+
 - tmux 3.0+
-- Claude Code (`~/.claude/` ディレクトリが存在すること)
+- Claude Code（`~/.claude/` ディレクトリが存在すること）
 
 ## インストール
 
@@ -30,14 +38,14 @@ bash install.sh
 インストール後、`~/.tmux.conf` に以下が追加されます：
 
 ```tmux
-set -g status-right-length 120
-set -g status-interval 30
-set -g status-right "#[fg=colour39]#(claude-usage short)#[default] | %H:%M %Y-%m-%d"
+# claude-tmux-status
+set -g status-right-length 200
+set -g status-right "#[fg=colour39]#(claude-usage short)#[default] | #[fg=green,bg=black]#(tmux-mem-cpu-load --colors --interval 2)#[default] | %H:%M %Y-%m-%d"
 ```
 
-## 手動設定
+`tmux-mem-cpu-load` がない環境では CPU/MEM 部分なしのシンプルな形式になります。
 
-`install.sh` を使わない場合、以下の手順で設定してください。
+## 手動設定
 
 ```bash
 # 1. スクリプトをインストール
@@ -47,7 +55,7 @@ chmod +x ~/.local/bin/claude-usage
 # 2. ~/.tmux.conf に追加
 cat >> ~/.tmux.conf << 'EOF'
 # claude-tmux-status
-set -g status-right-length 120
+set -g status-right-length 200
 set -g status-interval 30
 set -g status-right "#[fg=colour39]#(claude-usage short)#[default] | %H:%M %Y-%m-%d"
 EOF
@@ -60,23 +68,32 @@ tmux source-file ~/.tmux.conf
 
 | モード | コマンド | 出力例 |
 |--------|----------|--------|
-| short  | `claude-usage short` | `🤖 in:26.3K out:63.0K $0.42` |
-| long   | `claude-usage long`  | `Claude \| in:26.3K out:63.0K cache_r:20.4M cache_w:1.6M total:89.3K cost:$0.42` |
+| short  | `claude-usage short` | `🤖 5h:20.2K $4.94 \| day:$4.94 \| 7d:$43.90` |
+| long   | `claude-usage long`  | 各ウィンドウの全トークン種別内訳 |
 | json   | `claude-usage json`  | JSON 形式の詳細データ |
+
+### `long` モード出力例
+
+```
+5h  (last 5h): in:10.7K out:20.2K cr:8.2M cw:569.0K cost:$4.94
+day (today)  : in:10.7K out:20.2K cr:8.2M cw:569.0K cost:$4.94
+7d  (last 7d): in:52.3K out:361.3K cr:73.1M cw:4.4M cost:$43.90
+```
 
 ## コスト計算
 
 Claude Sonnet 4.x の公式料金をもとに計算しています：
 
-| トークン種別 | 料金 (USD/M tokens) |
-|-------------|---------------------|
-| Input       | $3.00               |
-| Output      | $15.00              |
-| Cache read  | $0.30               |
-| Cache create| $3.75               |
+| トークン種別 | 略称 | 料金 (USD/M tokens) |
+|-------------|------|---------------------|
+| Input       | in   | $3.00               |
+| Output      | out  | $15.00              |
+| Cache read  | cr   | $0.30               |
+| Cache create| cw   | $3.75               |
 
 > [!NOTE]
 > 実際の請求額とは異なる場合があります。概算値としてご利用ください。
+> レート制限の閾値（トークン上限数）はプランによって異なります。
 
 ## ライセンス
 
