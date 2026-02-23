@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # install.sh - Install claude-tmux-status
-set -euo pipefail
+set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="${HOME}/.local/bin"
 TMUX_CONF="${HOME}/.tmux.conf"
+MARKER="# claude-tmux-status"
 
 echo "=== claude-tmux-status installer ==="
 
@@ -21,31 +22,41 @@ if ! echo "$PATH" | grep -q "$BIN_DIR"; then
 fi
 
 # 3. Configure tmux
-TMUX_SNIPPET='# claude-tmux-status: refresh every 30s, show usage on right
-set -g status-right-length 120
-set -g status-interval 30
-set -g status-right "#[fg=colour39]#(claude-usage short)#[default] | %H:%M %Y-%m-%d"'
-
 if [ ! -f "$TMUX_CONF" ]; then
-    echo "" > "$TMUX_CONF"
+    touch "$TMUX_CONF"
 fi
 
-if grep -q "claude-tmux-status" "$TMUX_CONF"; then
+if grep -q "$MARKER" "$TMUX_CONF"; then
     echo "[skip] tmux config already contains claude-tmux-status snippet"
 else
-    echo "" >> "$TMUX_CONF"
-    echo "$TMUX_SNIPPET" >> "$TMUX_CONF"
+    # Check if status-right is already set with tmux-mem-cpu-load
+    if grep -q "tmux-mem-cpu-load" "$TMUX_CONF"; then
+        # Integrate: append claude-usage to existing mem-cpu-load display
+        TMUX_SNIPPET="${MARKER}
+set -g status-right-length 200
+set -g status-right \"#[fg=colour39]#(claude-usage short)#[default] | #[fg=green,bg=black]#(tmux-mem-cpu-load --colors --interval 2)#[default] | %H:%M %Y-%m-%d\""
+    else
+        # Fresh setup
+        TMUX_SNIPPET="${MARKER}
+set -g status-right-length 200
+set -g status-interval 30
+set -g status-right \"#[fg=colour39]#(claude-usage short)#[default] | %H:%M %Y-%m-%d\""
+    fi
+
+    printf '\n%s\n' "$TMUX_SNIPPET" >> "$TMUX_CONF"
     echo "[ok] Added claude-tmux-status to $TMUX_CONF"
 fi
 
 # 4. Reload tmux if running
-if tmux info &>/dev/null 2>&1; then
+if tmux info >/dev/null 2>&1; then
     tmux source-file "$TMUX_CONF" && echo "[ok] Reloaded tmux config"
+else
+    echo "[info] tmux is not running. Start tmux to see the status bar."
 fi
 
 echo ""
 echo "=== Done! ==="
-echo "Status bar will show:  🤖 in:26.3K out:63.0K \$0.42"
+echo "Status bar will show:  🤖 in:26.3K out:63.0K \$0.42 | <cpu/mem> | 14:35 2026-02-23"
 echo ""
 echo "Manual usage:"
 echo "  claude-usage short   # compact (for tmux)"
