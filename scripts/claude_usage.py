@@ -235,6 +235,39 @@ def install_hook():
     print("     Cache will update automatically at end of each Claude session.")
 
 
+def uninstall_hook():
+    """Remove the claude-usage Stop hook from ~/.claude/settings.json."""
+    try:
+        with open(CLAUDE_SETTINGS) as f:
+            settings = json.load(f)
+    except Exception:
+        print("[skip] ~/.claude/settings.json not found or invalid")
+        return
+
+    hooks = settings.get("hooks", {})
+    stop_list = hooks.get("Stop", [])
+    new_stop = [
+        entry for entry in stop_list
+        if not any("claude-usage" in h.get("command", "")
+                   for h in entry.get("hooks", []))
+    ]
+
+    if len(new_stop) == len(stop_list):
+        print("[skip] No claude-usage Stop hook found")
+        return
+
+    hooks["Stop"] = new_stop
+    if not hooks["Stop"]:
+        del hooks["Stop"]
+    if not hooks:
+        del settings["hooks"]
+
+    with open(CLAUDE_SETTINGS, "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+    print("[ok] Stop hook removed from ~/.claude/settings.json")
+
+
 # -- Cost aggregation from local JSONL ----------------------------------------
 
 def load_jsonl_records():
@@ -414,6 +447,10 @@ def main():
         install_hook()
         return
 
+    if cmd == "--uninstall-hook":
+        uninstall_hook()
+        return
+
     if cmd == "toggle":
         new = toggle_display_mode()
         sys.stdout.write(f"mode -> {new}\n")
@@ -468,7 +505,7 @@ def main():
         sys.stdout.flush()
         return
 
-    sys.stderr.write(f"Usage: {sys.argv[0]} [short|long|json|cost|toggle|--refresh|--install-hook]\n")
+    sys.stderr.write(f"Usage: {sys.argv[0]} [short|long|json|cost|toggle|--refresh|--install-hook|--uninstall-hook]\n")
     sys.exit(1)
 
 

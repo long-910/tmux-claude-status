@@ -72,6 +72,34 @@ bash install.sh
 
 ---
 
+## Uninstallation
+
+### Via TPM
+
+Remove the plugin line from `~/.tmux.conf`:
+
+```tmux
+set -g @plugin 'long-910/claude-tmux-status'
+```
+
+Then press `<prefix> + alt + u` to uninstall via TPM.
+
+### Manual uninstall
+
+```bash
+cd claude-tmux-status
+bash uninstall.sh
+```
+
+This removes:
+- `~/.local/bin/claude-usage`
+- The `claude-tmux-status` block from `~/.tmux.conf`
+- The Stop hook from `~/.claude/settings.json`
+- `~/.claude/claude-tmux-status.json` (settings)
+- `~/.claude/tmux-rate-limit-cache.json` (cache)
+
+---
+
 ## Requirements
 
 - Python 3.10+
@@ -91,6 +119,7 @@ bash install.sh
 | `claude-usage long` | Full breakdown | Only if Claude was active |
 | `claude-usage json` | JSON output | Only if Claude was active |
 | `claude-usage --install-hook` | Add Stop hook to Claude Code | No |
+| `claude-usage --uninstall-hook` | Remove Stop hook from Claude Code | No |
 
 ### Cost mode
 

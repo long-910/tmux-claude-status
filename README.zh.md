@@ -71,6 +71,34 @@ bash install.sh
 
 ---
 
+## 卸载
+
+### 通过 TPM
+
+从 `~/.tmux.conf` 中删除插件行：
+
+```tmux
+set -g @plugin 'long-910/claude-tmux-status'
+```
+
+然后按 `<prefix> + alt + u` 通过 TPM 卸载。
+
+### 手动卸载
+
+```bash
+cd claude-tmux-status
+bash uninstall.sh
+```
+
+将删除以下内容：
+- `~/.local/bin/claude-usage`
+- `~/.tmux.conf` 中的 `claude-tmux-status` 配置块
+- `~/.claude/settings.json` 中的 Stop 钩子
+- `~/.claude/claude-tmux-status.json`（配置文件）
+- `~/.claude/tmux-rate-limit-cache.json`（缓存文件）
+
+---
+
 ## 环境要求
 
 - Python 3.10+
@@ -90,6 +118,7 @@ bash install.sh
 | `claude-usage long` | 完整详情 | 仅 Claude 活跃时 |
 | `claude-usage json` | JSON 输出 | 仅 Claude 活跃时 |
 | `claude-usage --install-hook` | 安装 Stop 钩子 | 否 |
+| `claude-usage --uninstall-hook` | 删除 Stop 钩子 | 否 |
 
 ### 费用模式
 
