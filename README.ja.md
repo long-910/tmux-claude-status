@@ -72,6 +72,34 @@ bash install.sh
 
 ---
 
+## アンインストール
+
+### TPM 経由
+
+`~/.tmux.conf` からプラグイン行を削除：
+
+```tmux
+set -g @plugin 'long-910/claude-tmux-status'
+```
+
+その後 `<prefix> + alt + u` で TPM によるアンインストールを実行。
+
+### 手動アンインストール
+
+```bash
+cd claude-tmux-status
+bash uninstall.sh
+```
+
+以下が削除されます：
+- `~/.local/bin/claude-usage`
+- `~/.tmux.conf` の `claude-tmux-status` ブロック
+- `~/.claude/settings.json` の Stop フック
+- `~/.claude/claude-tmux-status.json`（設定ファイル）
+- `~/.claude/tmux-rate-limit-cache.json`（キャッシュ）
+
+---
+
 ## 必要環境
 
 - Python 3.10+
@@ -91,6 +119,7 @@ bash install.sh
 | `claude-usage long` | 詳細表示 | Claude 使用時のみ |
 | `claude-usage json` | JSON 出力 | Claude 使用時のみ |
 | `claude-usage --install-hook` | Stop フックを設定 | なし |
+| `claude-usage --uninstall-hook` | Stop フックを削除 | なし |
 
 ### コストモード
 
