@@ -4,7 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![tmux 3.0+](https://img.shields.io/badge/tmux-3.0%2B-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/long-910?label=Sponsor&logo=GitHub&color=EA4AAA)](https://github.com/sponsors/long-910)
+[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-pink?logo=github)](https://github.com/sponsors/long-910)
+
 
 Display Claude Code **usage percentage** in your tmux status bar — with zero token consumption by default.
 
@@ -152,15 +153,7 @@ Press `<prefix> + U` (or run `claude-usage toggle`) to switch to cost display:
 
 ## Update behavior
 
-### Default mode (zero consumption when idle)
-
-| Condition | Action |
-|-----------|--------|
-| Cache age < `cache_ttl` | Read cache only — no API call |
-| Cache stale + JSONL updated recently | 1 API call to refresh |
-| Cache stale + Claude idle | Read stale cache + show `[Xm ago]` |
-| End of Claude Code session (Stop hook) | 1 API call to refresh |
-| `claude-usage --refresh` | 1 API call |
+By default, the API is called only when Claude is actively running. When idle, stale cached data is shown with a `[Xm ago]` indicator — no tokens consumed.
 
 ### Realtime mode (opt-in)
 
@@ -183,22 +176,12 @@ Edit `~/.claude/claude-tmux-status.json`:
 
 ---
 
-## Data sources
-
-- **Percentage**: `anthropic-ratelimit-unified-5h-utilization` / `7d-utilization` response headers — identical to Claude.ai settings page
-- **Cost**: `~/.claude/projects/**/*.jsonl` local aggregation — no network required
-
-### Cost calculation pricing (Claude Sonnet 4.x)
-
-| Token type | USD / 1M |
-|------------|----------|
-| Input | $3.00 |
-| Output | $15.00 |
-| Cache read | $0.30 |
-| Cache create | $3.75 |
-
----
-
 ## License
 
 MIT
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture details, data sources, and development guide.

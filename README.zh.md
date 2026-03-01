@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![tmux 3.0+](https://img.shields.io/badge/tmux-3.0%2B-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/long-910?label=Sponsor&logo=GitHub&color=EA4AAA)](https://github.com/sponsors/long-910)
+[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-pink?logo=github)](https://github.com/sponsors/long-910)
 
 在 tmux 状态栏实时显示 Claude Code **使用率百分比**。默认情况下**不消耗任何 token**。
 
@@ -151,15 +151,8 @@ bash uninstall.sh
 
 ## 更新时机
 
-### 默认模式（空闲时零消耗）
-
-| 条件 | 动作 |
-|------|------|
-| 缓存在 `cache_ttl` 内 | 仅读取缓存（不调用 API） |
-| 缓存过期 + JSONL 最近更新 | 调用 1 次 API 刷新 |
-| 缓存过期 + Claude 空闲 | 显示旧缓存（附带 `[Xm ago]`） |
-| Claude Code 会话结束（Stop 钩子） | 调用 1 次 API 刷新 |
-| 执行 `claude-usage --refresh` | 调用 1 次 API |
+默认情况下，仅在 Claude 实际运行时调用 API。
+空闲时显示带 `[Xm ago]` 标记的旧缓存，不消耗任何 token。
 
 ### 实时模式（可选）
 
@@ -184,22 +177,12 @@ bash uninstall.sh
 
 ---
 
-## 数据来源
-
-- **百分比**：`anthropic-ratelimit-unified-5h-utilization` / `7d-utilization` 响应头（与 Claude.ai 设置页数据相同）
-- **费用**：`~/.claude/projects/**/*.jsonl` 本地聚合（无需网络）
-
-### 费用计算定价（Claude Sonnet 4.x）
-
-| Token 类型 | USD / 1M |
-|-----------|----------|
-| Input | $3.00 |
-| Output | $15.00 |
-| Cache read | $0.30 |
-| Cache create | $3.75 |
-
----
-
 ## 许可证
 
 MIT
+
+---
+
+## 贡献
+
+架构详情、数据来源及开发指南请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。

@@ -152,15 +152,8 @@ bash uninstall.sh
 
 ## 更新タイミング
 
-### デフォルトモード（idle 時は消費ゼロ）
-
-| 条件 | 動作 |
-|------|------|
-| キャッシュが `cache_ttl` 以内 | キャッシュ読み取りのみ（API コールなし） |
-| キャッシュ超過 ＋ JSONL が最近更新 | API 1回呼び出して更新 |
-| キャッシュ超過 ＋ Claude 未使用 | 古いキャッシュ表示（`[Xm ago]` 付き） |
-| Claude Code セッション終了時（Stop フック） | API 1回呼び出して更新 |
-| `claude-usage --refresh` 実行時 | API 1回 |
+デフォルトでは、Claude が実際に使用されているときのみ API を呼び出します。
+idle 時は古いキャッシュを `[Xm ago]` 付きで表示し、トークンを消費しません。
 
 ### リアルタイムモード（opt-in）
 
@@ -185,22 +178,12 @@ bash uninstall.sh
 
 ---
 
-## データソース
-
-- **パーセンテージ**: `anthropic-ratelimit-unified-5h-utilization` / `7d-utilization` レスポンスヘッダー（Claude.ai 設定画面と同値）
-- **コスト**: `~/.claude/projects/**/*.jsonl` のローカル集計（ネットワーク不要）
-
-### コスト計算料金（Claude Sonnet 4.x）
-
-| 種別 | USD / 1M |
-|------|----------|
-| Input | $3.00 |
-| Output | $15.00 |
-| Cache read | $0.30 |
-| Cache create | $3.75 |
-
----
-
 ## ライセンス
 
 MIT
+
+---
+
+## コントリビュート
+
+アーキテクチャ詳細・データソース・開発ガイドは [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。

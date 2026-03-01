@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.0] - 2026-03-01
+
+### Added
+- **Unit tests** (`tests/test_claude_usage.py`): 53 tests covering formatters, aggregation, cost calculation, cache I/O, settings, display mode toggle, hook management, and short output formatting
+- **CI workflow** (`.github/workflows/ci.yml`): lint (shellcheck + Python syntax) and pytest across Python 3.10/3.11/3.12 matrix on every push/PR to `main`
+- **Release workflow** (`.github/workflows/release.yml`): triggered by `v*.*.*` tags — automatically extracts the matching CHANGELOG section and creates a GitHub Release
+- **CONTRIBUTING.md**: architecture overview, data sources, cost calculation pricing, CI/CD and release process documentation
+- **README badges**: CI status, License, Python 3.10+, tmux 3.0+, GitHub Sponsors
+
+### Changed
+- README (EN/JA/ZH): moved developer-specific sections (data sources, cost calculation pricing) to `CONTRIBUTING.md`; simplified update behavior description; added link to `CONTRIBUTING.md`
+
+### Fixed
+- `install.sh`: removed unused `CURRENT_RIGHT` variable (shellcheck SC2034)
+- `uninstall.sh`: replaced `A && B || C` pattern with `if/then` (shellcheck SC2015)
+
+---
+
 ## [0.5.1] - 2026-02-23
 
 ### Fixed
