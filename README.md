@@ -69,7 +69,48 @@ set -g @claude-tmux-realtime     "false"  # enable 5-min API polling
 set -g @claude-tmux-cache-ttl   "300"    # cache TTL in seconds
 ```
 
+### Install from GitHub Release
+
+Download the latest `claude-usage` binary directly — no `git clone` required:
+
+```bash
+mkdir -p ~/.local/bin
+curl -fsSL https://github.com/long-910/claude-tmux-status/releases/latest/download/claude-usage \
+  -o ~/.local/bin/claude-usage
+chmod +x ~/.local/bin/claude-usage
+```
+
+Then configure tmux manually. Add to `~/.tmux.conf`:
+
+```tmux
+# claude-tmux-status
+set -g status-right-length 200
+set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
+bind U run-shell "claude-usage toggle && tmux refresh-client -S"
+```
+
+Reload tmux and set up the Stop hook:
+
+```bash
+tmux source-file ~/.tmux.conf
+claude-usage --install-hook
+```
+
+First run — populate the cache:
+
+```bash
+claude-usage --refresh
+```
+
 ### Manual install
+
+One-liner (no git required):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+```
+
+Or from a local clone:
 
 ```bash
 git clone https://github.com/long-910/claude-tmux-status.git

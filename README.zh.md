@@ -67,7 +67,48 @@ set -g @claude-tmux-realtime     "false"  # 启用 5 分钟轮询（消耗 token
 set -g @claude-tmux-cache-ttl   "300"    # 缓存有效期（秒）
 ```
 
+### 从 GitHub Release 安装
+
+无需 `git clone`，直接下载最新 `claude-usage` 二进制文件：
+
+```bash
+mkdir -p ~/.local/bin
+curl -fsSL https://github.com/long-910/claude-tmux-status/releases/latest/download/claude-usage \
+  -o ~/.local/bin/claude-usage
+chmod +x ~/.local/bin/claude-usage
+```
+
+在 `~/.tmux.conf` 中添加：
+
+```tmux
+# claude-tmux-status
+set -g status-right-length 200
+set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
+bind U run-shell "claude-usage toggle && tmux refresh-client -S"
+```
+
+重新加载 tmux 并安装 Stop 钩子：
+
+```bash
+tmux source-file ~/.tmux.conf
+claude-usage --install-hook
+```
+
+首次运行，填充缓存：
+
+```bash
+claude-usage --refresh
+```
+
 ### 手动安装
+
+一键安装（无需 git）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+```
+
+或从本地克隆安装：
 
 ```bash
 git clone https://github.com/long-910/claude-tmux-status.git
