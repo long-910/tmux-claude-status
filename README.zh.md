@@ -102,6 +102,14 @@ claude-usage --refresh
 
 ### 手动安装
 
+一键安装（无需 git）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+```
+
+或从本地克隆安装：
+
 ```bash
 git clone https://github.com/long-910/claude-tmux-status.git
 cd claude-tmux-status

@@ -104,6 +104,14 @@ claude-usage --refresh
 
 ### Manual install
 
+One-liner (no git required):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+```
+
+Or from a local clone:
+
 ```bash
 git clone https://github.com/long-910/claude-tmux-status.git
 cd claude-tmux-status

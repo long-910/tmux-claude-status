@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # install.sh - Manual installer for claude-tmux-status
 # For TPM installation, see README.md
+#
+# Usage:
+#   curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+#   bash install.sh  (from a local clone)
 set -eu
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT="$SCRIPT_DIR/scripts/claude_usage.py"
+GITHUB_RAW="https://raw.githubusercontent.com/long-910/claude-tmux-status/main"
 BIN_DIR="${HOME}/.local/bin"
 BIN="$BIN_DIR/claude-usage"
 TMUX_CONF="${HOME}/.tmux.conf"
@@ -14,7 +17,18 @@ echo "=== claude-tmux-status manual installer ==="
 
 # 1. Install script
 mkdir -p "$BIN_DIR"
-\cp "$SCRIPT" "$BIN"
+
+# Detect local clone vs remote (curl | bash) execution
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-}")" 2>/dev/null && pwd || echo "")"
+LOCAL_SCRIPT="$SCRIPT_DIR/scripts/claude_usage.py"
+
+if [ -f "$LOCAL_SCRIPT" ]; then
+    \cp "$LOCAL_SCRIPT" "$BIN"
+else
+    echo "[info] Downloading claude_usage.py from GitHub..."
+    curl -fsSL "$GITHUB_RAW/scripts/claude_usage.py" -o "$BIN"
+fi
+
 chmod +x "$BIN"
 echo "[ok] Installed: $BIN"
 

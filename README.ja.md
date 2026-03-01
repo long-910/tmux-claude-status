@@ -103,6 +103,14 @@ claude-usage --refresh
 
 ### 手動インストール
 
+ワンライナー（git 不要）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+```
+
+またはローカルクローンから：
+
 ```bash
 git clone https://github.com/long-910/claude-tmux-status.git
 cd claude-tmux-status
