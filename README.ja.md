@@ -68,6 +68,39 @@ set -g @claude-tmux-realtime     "false"  # 5分ごとの API ポーリングを
 set -g @claude-tmux-cache-ttl   "300"    # キャッシュ有効期間（秒）
 ```
 
+### GitHub Release からインストール
+
+`git clone` 不要。最新の `claude-usage` バイナリを直接ダウンロード：
+
+```bash
+mkdir -p ~/.local/bin
+curl -fsSL https://github.com/long-910/claude-tmux-status/releases/latest/download/claude-usage \
+  -o ~/.local/bin/claude-usage
+chmod +x ~/.local/bin/claude-usage
+```
+
+`~/.tmux.conf` に以下を追加：
+
+```tmux
+# claude-tmux-status
+set -g status-right-length 200
+set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
+bind U run-shell "claude-usage toggle && tmux refresh-client -S"
+```
+
+tmux を再読み込みし、Stop フックを設定：
+
+```bash
+tmux source-file ~/.tmux.conf
+claude-usage --install-hook
+```
+
+初回のキャッシュ取得：
+
+```bash
+claude-usage --refresh
+```
+
 ### 手動インストール
 
 ```bash
