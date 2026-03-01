@@ -57,7 +57,7 @@ fi
 
 # 6. Reload tmux if running
 if tmux info >/dev/null 2>&1; then
-    tmux source-file "$TMUX_CONF" 2>/dev/null && echo "[ok] Reloaded tmux" || true
+    if tmux source-file "$TMUX_CONF" 2>/dev/null; then echo "[ok] Reloaded tmux"; fi
 fi
 
 echo ""

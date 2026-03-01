@@ -30,7 +30,6 @@ if grep -q "$MARKER" "$TMUX_CONF"; then
     echo "[skip] tmux config already has claude-tmux-status"
 else
     if grep -q "tmux-mem-cpu-load" "$TMUX_CONF"; then
-        CURRENT_RIGHT=$(grep "status-right " "$TMUX_CONF" | tail -1 | sed 's/.*status-right //' | tr -d '"')
         STATUS_RIGHT="#($BIN short) | #[fg=green,bg=black]#(tmux-mem-cpu-load --colors --interval 2)#[default] | %H:%M %Y-%m-%d"
     else
         STATUS_RIGHT="#($BIN short) | %H:%M %Y-%m-%d"
