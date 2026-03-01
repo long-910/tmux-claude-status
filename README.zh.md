@@ -151,15 +151,8 @@ bash uninstall.sh
 
 ## 更新时机
 
-### 默认模式（空闲时零消耗）
-
-| 条件 | 动作 |
-|------|------|
-| 缓存在 `cache_ttl` 内 | 仅读取缓存（不调用 API） |
-| 缓存过期 + JSONL 最近更新 | 调用 1 次 API 刷新 |
-| 缓存过期 + Claude 空闲 | 显示旧缓存（附带 `[Xm ago]`） |
-| Claude Code 会话结束（Stop 钩子） | 调用 1 次 API 刷新 |
-| 执行 `claude-usage --refresh` | 调用 1 次 API |
+默认情况下，仅在 Claude 实际运行时调用 API。
+空闲时显示带 `[Xm ago]` 标记的旧缓存，不消耗任何 token。
 
 ### 实时模式（可选）
 
@@ -184,22 +177,12 @@ bash uninstall.sh
 
 ---
 
-## 数据来源
-
-- **百分比**：`anthropic-ratelimit-unified-5h-utilization` / `7d-utilization` 响应头（与 Claude.ai 设置页数据相同）
-- **费用**：`~/.claude/projects/**/*.jsonl` 本地聚合（无需网络）
-
-### 费用计算定价（Claude Sonnet 4.x）
-
-| Token 类型 | USD / 1M |
-|-----------|----------|
-| Input | $3.00 |
-| Output | $15.00 |
-| Cache read | $0.30 |
-| Cache create | $3.75 |
-
----
-
 ## 许可证
 
 MIT
+
+---
+
+## 贡献
+
+架构详情、数据来源及开发指南请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。
