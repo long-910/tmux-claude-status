@@ -385,6 +385,62 @@ class TestUninstallHook(unittest.TestCase):
 # Short output formatters
 # ---------------------------------------------------------------------------
 
+class TestHas7dLimit(unittest.TestCase):
+    def test_has_7d_when_reset_nonzero(self):
+        rl = {"reset_7d": 1234, "util_7d": 0.0}
+        self.assertTrue(cu.has_7d_limit(rl))
+
+    def test_has_7d_when_util_nonzero(self):
+        rl = {"reset_7d": 0, "util_7d": 0.5}
+        self.assertTrue(cu.has_7d_limit(rl))
+
+    def test_no_7d_when_both_zero(self):
+        rl = {"reset_7d": 0, "util_7d": 0.0}
+        self.assertFalse(cu.has_7d_limit(rl))
+
+    def test_no_7d_when_keys_missing(self):
+        rl = {}
+        self.assertFalse(cu.has_7d_limit(rl))
+
+
+class TestDetectProvider(unittest.TestCase):
+    def test_auto_with_oauth_returns_anthropic(self):
+        creds = {"claudeAiOauth": {"accessToken": "tok123"}}
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(creds, f)
+            fname = f.name
+        try:
+            with patch.object(cu, "CREDENTIALS_FILE", fname):
+                self.assertEqual(cu.detect_provider({"provider": "auto"}), "anthropic")
+        finally:
+            os.unlink(fname)
+
+    def test_auto_without_credentials_file_returns_other(self):
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"):
+            self.assertEqual(cu.detect_provider({"provider": "auto"}), "other")
+
+    def test_auto_with_no_oauth_key_returns_other(self):
+        creds = {"someOtherKey": {}}
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(creds, f)
+            fname = f.name
+        try:
+            with patch.object(cu, "CREDENTIALS_FILE", fname):
+                self.assertEqual(cu.detect_provider({"provider": "auto"}), "other")
+        finally:
+            os.unlink(fname)
+
+    def test_override_anthropic(self):
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"):
+            self.assertEqual(cu.detect_provider({"provider": "anthropic"}), "anthropic")
+
+    def test_override_bedrock_returns_other(self):
+        self.assertEqual(cu.detect_provider({"provider": "bedrock"}), "other")
+
+    def test_override_other(self):
+        self.assertEqual(cu.detect_provider({"provider": "other"}), "other")
+
+
 class TestShortPercent(unittest.TestCase):
     _NOW = 1_000_000.0
 
@@ -398,6 +454,18 @@ class TestShortPercent(unittest.TestCase):
             "reset_7d": int(self._NOW) + reset7_offset,
             "status_5h": s5,
             "status_7d": s7,
+        }
+
+    def _rl_5h_only(self, u5=0.78, s5="allowed", age_offset=-10, reset5_offset=10_020):
+        """Rate-limit data with no 7d limit (e.g. 5h-only plan)."""
+        return {
+            "fetched_at": self._NOW + age_offset,
+            "util_5h": u5,
+            "util_7d": 0.0,
+            "reset_5h": int(self._NOW) + reset5_offset,
+            "reset_7d": 0,
+            "status_5h": s5,
+            "status_7d": "",
         }
 
     def test_basic_output(self):
@@ -426,6 +494,17 @@ class TestShortPercent(unittest.TestCase):
         with patch("time.time", return_value=self._NOW):
             out = cu.short_percent(self._rl(age_offset=-10))
             self.assertNotIn("ago", out)
+
+    def test_5h_only_plan_no_7d_in_output(self):
+        with patch("time.time", return_value=self._NOW):
+            out = cu.short_percent(self._rl_5h_only())
+            self.assertIn("5h:", out)
+            self.assertNotIn("7d:", out)
+
+    def test_5h_only_plan_shows_utilization(self):
+        with patch("time.time", return_value=self._NOW):
+            out = cu.short_percent(self._rl_5h_only(u5=0.55))
+            self.assertIn("55%", out)
 
 
 if __name__ == "__main__":

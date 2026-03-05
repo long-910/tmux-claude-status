@@ -10,6 +10,10 @@ Realtime mode (opt-in, costs tokens):
   Polls Anthropic API every 5 min regardless of Claude activity.
   Cost: ~$0.001/day, ~$0.009/week, ~$0.04/month.
 
+Provider auto-detection:
+  anthropic  OAuth credentials found → rate-limit % display (default)
+  other      No OAuth (Bedrock / API key) → cost display from JSONL
+
 Commands:
   claude-usage              short display (current mode)
   claude-usage short        compact for tmux
@@ -21,7 +25,11 @@ Commands:
   claude-usage --install-hook  add Stop hook to ~/.claude/settings.json
 
 Settings: ~/.claude/claude-tmux-status.json
-  { "realtime": false, "cache_ttl": 300 }
+  {
+    "realtime": false,
+    "cache_ttl": 300,
+    "provider": "auto"    // "auto" | "anthropic" | "bedrock" | "other"
+  }
 """
 
 import json
@@ -40,7 +48,7 @@ CACHE_FILE       = os.path.expanduser("~/.claude/tmux-rate-limit-cache.json")
 CLAUDE_PROJECTS  = os.path.expanduser("~/.claude/projects")
 CLAUDE_SETTINGS  = os.path.expanduser("~/.claude/settings.json")
 
-DEFAULT_SETTINGS = {"realtime": False, "cache_ttl": 300}
+DEFAULT_SETTINGS = {"realtime": False, "cache_ttl": 300, "provider": "auto"}
 
 PRICING = {"input": 3.00, "output": 15.00, "cache_read": 0.30, "cache_create": 3.75}
 
@@ -53,6 +61,29 @@ def load_settings():
             return {**DEFAULT_SETTINGS, **json.load(f)}
     except Exception:
         return dict(DEFAULT_SETTINGS)
+
+
+def detect_provider(settings):
+    """Detect the Claude provider.
+
+    Returns "anthropic" if OAuth credentials exist (Claude.ai subscription),
+    otherwise "other" (AWS Bedrock, raw API key, etc.).
+
+    Override with settings["provider"]: "auto" | "anthropic" | "bedrock" | "other"
+    Any value other than "auto" and "anthropic" is treated as non-subscription.
+    """
+    override = settings.get("provider", "auto")
+    if override != "auto":
+        return "anthropic" if override == "anthropic" else "other"
+
+    try:
+        with open(CREDENTIALS_FILE) as f:
+            creds = json.load(f)
+        if creds.get("claudeAiOauth", {}).get("accessToken"):
+            return "anthropic"
+    except Exception:
+        pass
+    return "other"
 
 
 # -- Display mode (percent / cost) --------------------------------------------
@@ -372,18 +403,26 @@ def status_ind(status):
 
 # -- Output formatters --------------------------------------------------------
 
+def has_7d_limit(rl):
+    """Return True if the rate limit data includes a weekly (7d) limit."""
+    return rl.get("reset_7d", 0) > 0 or rl.get("util_7d", 0) > 0
+
+
 def short_percent(rl):
     u5   = rl["util_5h"]
-    u7   = rl["util_7d"]
     age  = fmt_age(rl.get("fetched_at", 0))
     ind5 = status_ind(rl["status_5h"])
-    ind7 = status_ind(rl["status_7d"])
     r5   = fmt_reset(rl["reset_5h"])
-    return (
-        f"5h:{fmt_pct(u5)}{ind5}({r5}) "
-        f"7d:{fmt_pct(u7)}{ind7}"
-        f"{age}"
-    )
+    if has_7d_limit(rl):
+        u7   = rl["util_7d"]
+        ind7 = status_ind(rl["status_7d"])
+        return (
+            f"5h:{fmt_pct(u5)}{ind5}({r5}) "
+            f"7d:{fmt_pct(u7)}{ind7}"
+            f"{age}"
+        )
+    # 5h-only plan (no weekly limit)
+    return f"5h:{fmt_pct(u5)}{ind5}({r5}){age}"
 
 
 def short_cost(records):
@@ -401,15 +440,22 @@ def short_cost(records):
 def long_output(rl, records, settings):
     lines = []
     realtime = settings.get("realtime", False)
+    provider = detect_provider(settings)
     mode_lbl = "realtime(5min)" if realtime else "default(no API)"
+    prov_lbl = settings.get("provider", "auto")
 
-    lines.append(f"-- Rate Limit [{mode_lbl}] " + "-" * 30)
-    if rl:
+    lines.append(f"-- Rate Limit [{mode_lbl}] provider:{prov_lbl}({provider}) " + "-" * 18)
+    if provider == "other":
+        lines.append("  [not available] AWS Bedrock / API key — showing cost from local JSONL")
+    elif rl:
         u5  = rl["util_5h"]
-        u7  = rl["util_7d"]
         age = fmt_age(rl.get("fetched_at", 0)).strip()
         lines.append(f"  5h: {fmt_pct(u5):>4} [{pct_bar(u5)}] reset:{fmt_reset(rl['reset_5h'])}  ({rl['status_5h']})")
-        lines.append(f"  7d: {fmt_pct(u7):>4} [{pct_bar(u7)}] reset:{fmt_reset(rl['reset_7d'])}  ({rl['status_7d']})")
+        if has_7d_limit(rl):
+            u7 = rl["util_7d"]
+            lines.append(f"  7d: {fmt_pct(u7):>4} [{pct_bar(u7)}] reset:{fmt_reset(rl['reset_7d'])}  ({rl['status_7d']})")
+        else:
+            lines.append("  7d: [no weekly limit on this plan]")
         lines.append(f"  last updated: {age or 'just now'}")
     else:
         lines.append("  [no data] run: claude-usage --refresh")
@@ -458,15 +504,21 @@ def main():
         return
 
     if cmd in ("short", ""):
-        mode = get_display_mode()
-        if mode == "cost":
+        settings = load_settings()
+        provider = detect_provider(settings)
+        if provider == "other":
+            # Bedrock / API key: rate-limit headers unavailable → show cost
             out = "[cost] " + short_cost(load_jsonl_records())
         else:
-            rl = get_rate_limit()
-            if rl:
-                out = short_percent(rl)
+            mode = get_display_mode()
+            if mode == "cost":
+                out = "[cost] " + short_cost(load_jsonl_records())
             else:
-                out = "[--] run: claude-usage --refresh"
+                rl = get_rate_limit()
+                if rl:
+                    out = short_percent(rl)
+                else:
+                    out = "[--] run: claude-usage --refresh"
         sys.stdout.write(out + "\n")
         sys.stdout.flush()
         return
@@ -484,13 +536,16 @@ def main():
         return
 
     if cmd == "json":
-        rl = get_rate_limit()
+        settings = load_settings()
+        provider = detect_provider(settings)
+        rl = get_rate_limit() if provider == "anthropic" else None
         records = load_jsonl_records()
         now = datetime.now(timezone.utc)
         def w(since):
             t = aggregate(records, since)
             return {**t, "cost_usd": round(calc_cost(t), 6)}
         out = {
+            "provider":     provider,
             "rate_limit":   rl,
             "cost": {
                 "5h":    w(now - timedelta(hours=5)),
@@ -498,7 +553,7 @@ def main():
                 "7d":    w(now - timedelta(days=7)),
             },
             "display_mode": get_display_mode(),
-            "settings":     load_settings(),
+            "settings":     settings,
             "generated_at": now.isoformat(),
         }
         sys.stdout.write(json.dumps(out, indent=2) + "\n")

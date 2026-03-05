@@ -7,7 +7,8 @@
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-pink?logo=github)](https://github.com/sponsors/long-910)
 
 
-Display Claude Code **usage percentage** in your tmux status bar — with zero token consumption by default.
+Display Claude Code **usage** in your tmux status bar — with zero token consumption by default.
+Supports **Claude.ai subscription** (rate-limit %) and **AWS Bedrock / API key** (cost from local JSONL).
 
 [English](README.md) | [日本語](README.ja.md) | [中文](README.zh.md)
 
@@ -26,23 +27,39 @@ Claude is idle     →  read cache only (no API calls)  →  show age of data
 
 ## Display example
 
+**Claude.ai Pro / Max / Team / Enterprise** (rate-limit % from Anthropic API):
 ```
 5h:78%(2h47m) 7d:84%!  |  [CPU/MEM]  |  11:23 2026-02-23
+```
+
+**5h-only plan** (no weekly limit):
+```
+5h:78%(2h47m)  |  [CPU/MEM]  |  11:23 2026-02-23
+```
+
+**AWS Bedrock / API key** (cost from local JSONL, no API call):
+```
+[cost] 5h:$14.21 day:$14.21 7d:$53.17  |  [CPU/MEM]  |  11:23 2026-02-23
 ```
 
 | Token | Meaning |
 |-------|---------|
 | `5h:78%` | 5-hour window utilization (from Anthropic API, same as Claude.ai settings) |
 | `(2h47m)` | Time until 5h window resets |
-| `7d:84%` | Weekly utilization |
+| `7d:84%` | Weekly utilization (hidden when plan has no weekly limit) |
 | `!` | `allowed_warning` — over 75% threshold |
 | `X` | `denied` — limit reached |
 | `[15m ago]` | Cache age — shown only when Claude has been idle |
+| `[cost]` | Cost mode — active for Bedrock/API key or when toggled manually |
 
 **No cache yet:**
 ```
 [--] run: claude-usage --refresh
 ```
+
+> **Note:** Rate-limit % display has been tested with **Claude.ai Pro plan only**.
+> If the display is incorrect for your plan (Max, Team, Enterprise, Bedrock, etc.),
+> please [file an issue](https://github.com/long-910/claude-tmux-status/issues).
 
 ---
 
@@ -152,7 +169,9 @@ This removes:
 
 - Python 3.10+
 - tmux 3.0+
-- Claude Code with `~/.claude/.credentials.json`
+- Claude Code
+  - Claude.ai subscription: `~/.claude/.credentials.json` required for rate-limit % display
+  - AWS Bedrock / API key: no credentials file needed — cost display from local JSONL
 
 ---
 
@@ -179,11 +198,22 @@ Press `<prefix> + U` (or run `claude-usage toggle`) to switch to cost display:
 
 ### `long` mode output
 
+Claude.ai subscription (Pro plan example):
 ```
--- Rate Limit [default(no API)] ------------------------------
+-- Rate Limit [default(no API)] provider:auto(anthropic) ------------------
   5h:  78% [XXXXXX..] reset:2h47m  (allowed)
   7d:  84% [XXXXXXX.] reset:4.3d   (allowed_warning)
   last updated: just now
+-- Token Cost [local JSONL] ---------------------------------
+  5h : in:38.5K out:127.8K cr:24.6M cw:1.3M cost:$14.21
+  day: in:38.5K out:127.8K cr:24.6M cw:1.3M cost:$14.21
+  7d : in:80.0K out:468.9K cr:89.5M cw:5.1M cost:$53.17
+```
+
+AWS Bedrock / API key:
+```
+-- Rate Limit [default(no API)] provider:auto(other) ------------------
+  [not available] AWS Bedrock / API key — showing cost from local JSONL
 -- Token Cost [local JSONL] ---------------------------------
   5h : in:38.5K out:127.8K cr:24.6M cw:1.3M cost:$14.21
   day: in:38.5K out:127.8K cr:24.6M cw:1.3M cost:$14.21
@@ -196,16 +226,27 @@ Press `<prefix> + U` (or run `claude-usage toggle`) to switch to cost display:
 
 By default, the API is called only when Claude is actively running. When idle, stale cached data is shown with a `[Xm ago]` indicator — no tokens consumed.
 
-### Realtime mode (opt-in)
+### Settings file
 
 Edit `~/.claude/claude-tmux-status.json`:
 
 ```json
 {
-  "realtime": true,
-  "cache_ttl": 300
+  "realtime": false,
+  "cache_ttl": 300,
+  "provider": "auto"
 }
 ```
+
+| Key | Values | Default | Description |
+|-----|--------|---------|-------------|
+| `realtime` | `true` / `false` | `false` | Poll API every `cache_ttl` seconds regardless of Claude activity |
+| `cache_ttl` | integer (seconds) | `300` | Cache TTL |
+| `provider` | `"auto"` / `"anthropic"` / `"bedrock"` / `"other"` | `"auto"` | Override provider detection. `"auto"` checks `~/.claude/.credentials.json` |
+
+### Realtime mode (opt-in)
+
+Set `"realtime": true` in the settings file above.
 
 **Cost estimate for realtime mode** (claude-haiku-4-5, ~9 tokens/call):
 
