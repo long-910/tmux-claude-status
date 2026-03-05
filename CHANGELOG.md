@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.1] - 2026-03-05
+
+### Added
+- **Provider auto-detection**: Checks `~/.claude/.credentials.json` for an OAuth token at startup.
+  - Found → `"anthropic"` mode: rate-limit % display (existing behavior)
+  - Not found → `"other"` mode: cost display from local JSONL (no API call)
+  - AWS Bedrock and raw API-key users now see `[cost] 5h:$x.xxx day:$x.xxx 7d:$x.xxx` automatically
+- **`"provider"` setting** in `~/.claude/claude-tmux-status.json`:
+  `"auto"` (default) | `"anthropic"` | `"bedrock"` | `"other"` — overrides auto-detection
+- **5h-only plan support**: When the Anthropic API returns no weekly (7d) limit headers,
+  the status bar shows only `5h:xx%(Xhxxm)` without the `7d:` field
+- **`json` command** now includes a `"provider"` field in output
+- **`long` command** now shows detected provider and omits or annotates 7d when not available
+- New unit tests: `TestDetectProvider` (6 cases), `TestHas7dLimit` (4 cases), two `TestShortPercent` cases for 5h-only plans (65 tests total)
+
+### Notes
+- The rate-limit % display has been tested with **Claude.ai Pro plan only**.
+  Behavior on Max, Team, Enterprise, AWS Bedrock, and raw API-key plans is untested.
+  If the display is incorrect for your plan, please [file an issue](https://github.com/long-910/claude-tmux-status/issues).
+
+---
+
 ## [0.6.0] - 2026-03-01
 
 ### Added
