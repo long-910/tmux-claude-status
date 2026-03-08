@@ -77,11 +77,12 @@ set -g @plugin 'long-910/claude-tmux-status'
 
 ```tmux
 # 以下均为可选项（括号内为默认值）：
-set -g @claude-tmux-toggle-key   "U"      # <prefix>+U 切换百分比/费用显示
-set -g @claude-tmux-install-hook "true"   # 自动安装 Claude Code Stop 钩子
-set -g @claude-tmux-auto-status  "true"   # 自动配置 status-right
-set -g @claude-tmux-realtime     "false"  # 启用 5 分钟轮询（消耗 token）
-set -g @claude-tmux-cache-ttl   "300"    # 缓存有效期（秒）
+set -g @claude-tmux-toggle-key    "U"      # <prefix>+U 切换百分比/费用显示
+set -g @claude-tmux-dashboard-key "D"      # <prefix>+D 打开仪表盘弹窗（tmux 3.2+）
+set -g @claude-tmux-install-hook  "true"   # 自动安装 Claude Code Stop 钩子
+set -g @claude-tmux-auto-status   "true"   # 自动配置 status-right
+set -g @claude-tmux-realtime      "false"  # 启用 5 分钟轮询（消耗 token）
+set -g @claude-tmux-cache-ttl    "300"    # 缓存有效期（秒）
 ```
 
 ### 从 GitHub Release 安装
@@ -102,6 +103,7 @@ chmod +x ~/.local/bin/claude-usage
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
+bind D display-popup -E -w 82 -h 40 "claude-usage dashboard"
 ```
 
 重新加载 tmux 并安装 Stop 钩子：
@@ -183,6 +185,7 @@ bash uninstall.sh
 | `claude-usage cost` | 显示费用（临时） | 否 |
 | `claude-usage long` | 完整详情 | 仅 Claude 活跃时 |
 | `claude-usage json` | JSON 输出 | 仅 Claude 活跃时 |
+| `claude-usage dashboard` | 交互式全屏仪表盘 | 仅 Claude 活跃时 |
 | `claude-usage --install-hook` | 安装 Stop 钩子 | 否 |
 | `claude-usage --uninstall-hook` | 删除 Stop 钩子 | 否 |
 
@@ -193,6 +196,48 @@ bash uninstall.sh
 ```
 5h:$14.21 day:$14.21 7d:$53.17
 ```
+
+### 仪表盘
+
+按 `<prefix> + D`（或运行 `claude-usage dashboard`）打开全屏仪表盘。
+弹窗功能需要 **tmux 3.2+**，也可在任意终端中直接运行。
+
+```
++==============================================================================+
+|                            Claude Usage Dashboard                            |
++==============================================================================+
+|   Rate Limits                                                     [just now] |
+|                                                                              |
+|   5h:  78%  [###############.....]  reset 2h47m       (allowed_warning)      |
+|   7d:  84%  [################....]  reset 5.1d        (allowed_warning)      |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Token Usage & Cost                                                         |
+|                                                                              |
+|               Input     Output    CacheRd    CacheWr       Cost              |
+|       5h      38.5K     127.8K      24.6M       1.3M     $14.21              |
+|    Today      38.5K     127.8K      24.6M       1.3M     $14.21              |
+|       7d      80.0K     468.9K      89.5M       5.1M     $53.17              |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Top Projects  (7-day cost)                                                 |
+|                                                                              |
+|   my-app                    $28.34  [##########........]  53%                |
+|   claude-plugin             $14.12  [#####.............]  27%                |
+|   dotfiles                  $10.71  [####..............]  20%                |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Provider: anthropic(auto)  |  Mode: default(no API)  |  Display: percent   |
++==============================================================================+
+
+  [r] refresh    [w] toggle watch(30s)    [q] quit
+```
+
+| 按键 | 操作 |
+|------|------|
+| `r` | 立即刷新数据 |
+| `w` | 切换 30 秒自动刷新（监视模式） |
+| `q` / `Esc` | 退出 |
 
 ### `long` 模式输出示例
 

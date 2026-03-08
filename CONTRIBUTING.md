@@ -26,13 +26,29 @@ python -m unittest discover tests/ -v
 
 ```
 claude-tmux-status/
-├── scripts/claude_usage.py   # Main script: API, cache, formatters, output modes
+├── scripts/claude_usage.py   # Main script: API, cache, formatters, output modes, dashboard
 ├── claude-tmux-status.tmux   # TPM entry point: installs script, configures tmux
 ├── install.sh                # Manual installer
 ├── uninstall.sh              # Manual uninstaller
 └── tests/
-    └── test_claude_usage.py  # Unit tests
+    └── test_claude_usage.py  # Unit tests (87 tests)
 ```
+
+### Script structure (`scripts/claude_usage.py`)
+
+| Section | Key functions |
+|---------|--------------|
+| Settings | `load_settings()`, `detect_provider()` |
+| Display mode | `get_display_mode()`, `toggle_display_mode()` |
+| JSONL monitoring | `latest_jsonl_mtime()` |
+| Cache | `load_cache()`, `save_cache()` |
+| API | `fetch_rate_limit()`, `get_rate_limit()` |
+| Hook management | `install_hook()`, `uninstall_hook()` |
+| Cost aggregation | `load_jsonl_records()`, `load_jsonl_records_by_project()`, `aggregate()`, `calc_cost()` |
+| Formatters | `fmt_tokens()`, `fmt_cost()`, `fmt_pct()`, `fmt_reset()`, `fmt_age()`, `pct_bar()`, `progress_bar()` |
+| Status bar output | `short_percent()`, `short_cost()`, `long_output()` |
+| Dashboard | `decode_project_name()`, `render_dashboard()`, `read_key()`, `dashboard_cmd()` |
+| Entry point | `main()` |
 
 ### How it works
 
@@ -51,6 +67,14 @@ claude-tmux-status/
    - Installed into `~/.claude/settings.json` as a Claude Code `Stop` hook
    - Ensures the cache is always fresh right after a session ends
 
+4. **Dashboard** (`claude-usage dashboard`):
+   - Renders a full-screen 80-column ASCII box with four panels:
+     Rate Limits / Token Usage & Cost / Top Projects / Status
+   - Uses `tty` + `termios` + `select` (stdlib) for raw keypress input with timeout
+   - Decodes project folder names via `decode_project_name()` (path encoding: `/` → `-`)
+   - Non-TTY safe: prints once and exits when stdin is not a terminal
+   - Invoked as a tmux popup via `display-popup -E -w 82 -h 40` (requires tmux 3.2+)
+
 ### Settings file
 
 `~/.claude/claude-tmux-status.json`
@@ -58,7 +82,8 @@ claude-tmux-status/
 ```json
 {
   "realtime": false,
-  "cache_ttl": 300
+  "cache_ttl": 300,
+  "provider": "auto"
 }
 ```
 

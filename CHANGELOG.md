@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.0] - 2026-03-08
+
+### Added
+- **`dashboard` command** — interactive full-screen dashboard, designed for use as a tmux popup (`<prefix>+D`)
+  - **Rate Limits panel**: 5h/7d utilization with ASCII progress bars and reset countdowns (Claude.ai subscription)
+  - **Token Usage & Cost panel**: input / output / cache-read / cache-write breakdown for 5h, today, and 7d windows
+  - **Top Projects panel**: per-project 7-day cost ranking with proportional progress bars (top 8 projects)
+  - **Status bar**: provider, update mode, and current display mode
+  - Interactive keys: `r` = refresh, `w` = toggle 30-second auto-watch, `q` / `Esc` / `Ctrl-C` = quit
+  - Non-TTY safe: prints once and exits when stdin is not a terminal (piped / testing)
+- **`@claude-tmux-dashboard-key` TPM option** (default `"D"`): binds `<prefix>+D` to open the dashboard in a tmux popup (`display-popup -E`); set to `"none"` to disable
+- **`decode_project_name()`**: converts Claude Code's encoded project folder names (`-home-user-proj`) to human-readable labels
+- **`load_jsonl_records_by_project()`**: groups JSONL token records by project for per-project cost breakdown
+- **`progress_bar()`**: fixed-width ASCII progress bar renderer (used in both dashboard and available for extension)
+- 22 new unit tests: `TestDecodeProjectName` (5), `TestProgressBar` (7), `TestLoadJsonlByProject` (3), `TestRenderDashboard` (7) — total 87 tests
+
+### Notes
+- tmux popup (`display-popup`) requires **tmux 3.2+**. The `dashboard` command itself works in any terminal without tmux.
+
+---
+
 ## [0.6.1] - 2026-03-05
 
 ### Added
