@@ -21,6 +21,7 @@ Commands:
   claude-usage json         JSON output
   claude-usage cost         force cost display
   claude-usage toggle       switch percent / cost display
+  claude-usage dashboard    interactive full-screen dashboard (tmux popup)
   claude-usage --refresh    force API update (for hooks / manual)
   claude-usage --install-hook  add Stop hook to ~/.claude/settings.json
 
@@ -51,6 +52,8 @@ CLAUDE_SETTINGS  = os.path.expanduser("~/.claude/settings.json")
 DEFAULT_SETTINGS = {"realtime": False, "cache_ttl": 300, "provider": "auto"}
 
 PRICING = {"input": 3.00, "output": 15.00, "cache_read": 0.30, "cache_create": 3.75}
+
+DASH_WIDTH = 78  # inner width between '+' delimiters (total box = 80 cols)
 
 
 # -- Settings -----------------------------------------------------------------
@@ -332,6 +335,61 @@ def load_jsonl_records():
     return records
 
 
+def decode_project_name(folder_name):
+    """Convert Claude Code's encoded project folder name to a human-readable label.
+
+    Claude Code stores projects as absolute paths with '/' → '-', e.g.:
+      /home/user/my-project  →  -home-user-my-project
+    """
+    name = folder_name.lstrip('-')
+    parts = name.split('-')
+    # Strip common 'home-<user>-' prefix so only the project portion remains
+    if len(parts) >= 3 and parts[0] == 'home':
+        name = '-'.join(parts[2:])
+    return name or folder_name
+
+
+def load_jsonl_records_by_project():
+    """Like load_jsonl_records() but groups records by decoded project name.
+
+    Returns dict: project_name -> list of (datetime, usage_dict)
+    """
+    projects = {}
+    if not os.path.isdir(CLAUDE_PROJECTS):
+        return projects
+    for path in glob.glob(f"{CLAUDE_PROJECTS}/**/*.jsonl", recursive=True):
+        folder = os.path.basename(os.path.dirname(path))
+        proj_name = decode_project_name(folder)
+        proj_list = projects.setdefault(proj_name, [])
+        try:
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                    except Exception:
+                        continue
+                    msg = data.get("message", {})
+                    if not isinstance(msg, dict):
+                        continue
+                    usage = msg.get("usage", {})
+                    if not usage:
+                        continue
+                    ts = data.get("timestamp")
+                    if not ts:
+                        continue
+                    try:
+                        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                        proj_list.append((dt, usage))
+                    except Exception:
+                        continue
+        except Exception:
+            continue
+    return projects
+
+
 def aggregate(records, since):
     t = {"input": 0, "output": 0, "cache_read": 0, "cache_create": 0, "records": 0}
     for dt, usage in records:
@@ -399,6 +457,13 @@ def status_ind(status):
     if status in ("denied", "blocked"): return "X"
     if "warning" in status:             return "!"
     return ""
+
+
+def progress_bar(ratio, width=20, fill='#', empty='.'):
+    """Render a fixed-width ASCII progress bar."""
+    ratio = max(0.0, min(1.0, ratio))
+    filled = round(ratio * width)
+    return f"[{fill * filled}{empty * (width - filled)}]"
 
 
 # -- Output formatters --------------------------------------------------------
@@ -474,6 +539,214 @@ def long_output(rl, records, settings):
     return "\n".join(lines)
 
 
+# -- Dashboard ----------------------------------------------------------------
+
+def _dline(char='-'):
+    """Full-width horizontal divider for the dashboard box."""
+    return '+' + char * DASH_WIDTH + '+'
+
+
+def _drow(content=''):
+    """Left-aligned row inside the dashboard box."""
+    content = str(content)
+    inner = DASH_WIDTH - 2
+    if len(content) > inner:
+        content = content[:inner - 3] + '...'
+    return '| ' + content + ' ' * (inner - len(content)) + ' |'
+
+
+def _drow2(left, right):
+    """Row with left- and right-aligned text inside the dashboard box."""
+    inner = DASH_WIDTH - 2
+    left, right = str(left), str(right)
+    if len(left) + 1 + len(right) > inner:
+        left = left[:inner - len(right) - 4] + '...'
+    pad = inner - len(left) - len(right)
+    return '| ' + left + ' ' * max(1, pad) + right + ' |'
+
+
+def render_dashboard(rl, records, proj_records, settings):
+    """Render the full dashboard as a multi-line string."""
+    now = datetime.now(timezone.utc)
+    provider = detect_provider(settings)
+    realtime = settings.get("realtime", False)
+    prov_setting = settings.get("provider", "auto")
+    mode_lbl = "realtime" if realtime else "default(no API)"
+
+    L = []
+
+    # ── Header ───────────────────────────────────────────────────────────
+    L.append(_dline('='))
+    title = 'Claude Usage Dashboard'
+    pad = (DASH_WIDTH - 2 - len(title)) // 2
+    L.append(_drow(' ' * pad + title))
+    L.append(_dline('='))
+
+    # ── Rate Limits ──────────────────────────────────────────────────────
+    if provider == "anthropic":
+        age_raw = fmt_age(rl.get("fetched_at", 0)) if rl else " [--]"
+        age_label = age_raw.strip() or '[just now]'
+        L.append(_drow2("  Rate Limits", age_label))
+        L.append(_drow())
+        if rl:
+            u5 = rl["util_5h"]
+            s5 = status_ind(rl["status_5h"])
+            L.append(_drow(
+                f"  5h: {fmt_pct(u5):>4}{s5}  {progress_bar(u5)}"
+                f"  reset {fmt_reset(rl['reset_5h']):<10}  ({rl['status_5h']})"
+            ))
+            if has_7d_limit(rl):
+                u7 = rl["util_7d"]
+                s7 = status_ind(rl["status_7d"])
+                L.append(_drow(
+                    f"  7d: {fmt_pct(u7):>4}{s7}  {progress_bar(u7)}"
+                    f"  reset {fmt_reset(rl['reset_7d']):<10}  ({rl['status_7d']})"
+                ))
+            else:
+                L.append(_drow("  7d: [no weekly limit on this plan]"))
+        else:
+            L.append(_drow("  [no data]  run: claude-usage --refresh"))
+    else:
+        L.append(_drow("  Rate Limits: [not available]  AWS Bedrock / API key user"))
+
+    L.append(_drow())
+    L.append(_dline())
+
+    # ── Token Usage & Cost ───────────────────────────────────────────────
+    L.append(_drow("  Token Usage & Cost"))
+    L.append(_drow())
+    L.append(_drow(
+        f"  {'':6}  {'Input':>9}  {'Output':>9}  {'CacheRd':>9}  {'CacheWr':>9}  {'Cost':>9}"
+    ))
+
+    def _cost_row(label, since):
+        t = aggregate(records, since)
+        return (
+            f"  {label:>6}  {fmt_tokens(t['input']):>9}  {fmt_tokens(t['output']):>9}  "
+            f"{fmt_tokens(t['cache_read']):>9}  {fmt_tokens(t['cache_create']):>9}  "
+            f"{fmt_cost(calc_cost(t)):>9}"
+        )
+
+    L.append(_drow(_cost_row("5h", now - timedelta(hours=5))))
+    L.append(_drow(_cost_row(
+        "Today",
+        datetime.combine(date.today(), datetime.min.time(), tzinfo=timezone.utc),
+    )))
+    L.append(_drow(_cost_row("7d", now - timedelta(days=7))))
+    L.append(_drow())
+    L.append(_dline())
+
+    # ── Top Projects (7-day cost) ─────────────────────────────────────────
+    L.append(_drow("  Top Projects  (7-day cost)"))
+    L.append(_drow())
+
+    since_7d = now - timedelta(days=7)
+    proj_costs = [
+        (name, calc_cost(aggregate(recs, since_7d)))
+        for name, recs in proj_records.items()
+    ]
+    proj_costs = [(n, c) for n, c in proj_costs if c > 0]
+    proj_costs.sort(key=lambda x: x[1], reverse=True)
+
+    if proj_costs:
+        total_7d = sum(c for _, c in proj_costs)
+        for pname, c in proj_costs[:8]:
+            ratio = c / total_7d if total_7d > 0 else 0.0
+            pct_str = f"{ratio * 100:.0f}%"
+            bar_str = progress_bar(ratio, width=18)
+            name_max = 22
+            display = (pname[:name_max - 1] + '>') if len(pname) > name_max else pname
+            L.append(_drow(
+                f"  {display:<{name_max}}  {fmt_cost(c):>8}  {bar_str}  {pct_str}"
+            ))
+    else:
+        L.append(_drow("  [no project data found]"))
+
+    L.append(_drow())
+    L.append(_dline())
+
+    # ── Status bar ────────────────────────────────────────────────────────
+    L.append(_drow(
+        f"  Provider: {provider}({prov_setting})"
+        f"  |  Mode: {mode_lbl}"
+        f"  |  Display: {get_display_mode()}"
+    ))
+    L.append(_dline('='))
+    L.append("")
+    L.append("  [r] refresh    [w] toggle watch(30s)    [q] quit")
+
+    return "\n".join(L)
+
+
+def read_key(timeout=None):
+    """Read a single keypress from stdin. Returns None on timeout or non-TTY."""
+    if not sys.stdin.isatty():
+        return None
+    try:
+        import tty
+        import termios
+        import select as _select
+        fd = sys.stdin.fileno()
+        old = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            if timeout is not None:
+                ready, _, _ = _select.select([sys.stdin], [], [], timeout)
+                if not ready:
+                    return None
+            return sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old)
+    except Exception:
+        return None
+
+
+def dashboard_cmd():
+    """Interactive full-screen dashboard, designed for use in a tmux popup."""
+    import signal
+
+    settings = load_settings()
+    provider = detect_provider(settings)
+    watch = False
+    interactive = sys.stdin.isatty()
+
+    def fetch():
+        rl = get_rate_limit() if provider == "anthropic" else None
+        return rl, load_jsonl_records(), load_jsonl_records_by_project()
+
+    rl, records, proj_records = fetch()
+
+    # Non-interactive: just print and exit (e.g. piped or testing)
+    if not interactive:
+        print(render_dashboard(rl, records, proj_records, settings))
+        return
+
+    def handle_sigint(sig, frame):
+        sys.stdout.write("\n")
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, handle_sigint)
+
+    while True:
+        sys.stdout.write("\033[2J\033[H")
+        sys.stdout.flush()
+        print(render_dashboard(rl, records, proj_records, settings))
+
+        key = read_key(timeout=30 if watch else 120)
+
+        if key in ('q', 'Q', '\x03', '\x1b'):   # q / Ctrl-C / Esc
+            break
+        elif key in ('r', 'R'):
+            rl, records, proj_records = fetch()
+        elif key in ('w', 'W'):
+            watch = not watch
+            if watch:
+                rl, records, proj_records = fetch()
+        elif key is None and watch:
+            rl, records, proj_records = fetch()
+        # Non-watch 120s timeout: redraw without API call (falls through to top)
+
+
 # -- Main ---------------------------------------------------------------------
 
 def main():
@@ -535,6 +808,10 @@ def main():
         sys.stdout.flush()
         return
 
+    if cmd == "dashboard":
+        dashboard_cmd()
+        return
+
     if cmd == "json":
         settings = load_settings()
         provider = detect_provider(settings)
@@ -560,7 +837,7 @@ def main():
         sys.stdout.flush()
         return
 
-    sys.stderr.write(f"Usage: {sys.argv[0]} [short|long|json|cost|toggle|--refresh|--install-hook|--uninstall-hook]\n")
+    sys.stderr.write(f"Usage: {sys.argv[0]} [short|long|json|cost|toggle|dashboard|--refresh|--install-hook|--uninstall-hook]\n")
     sys.exit(1)
 
 

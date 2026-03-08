@@ -507,5 +507,189 @@ class TestShortPercent(unittest.TestCase):
             self.assertIn("55%", out)
 
 
+# ---------------------------------------------------------------------------
+# Dashboard helpers
+# ---------------------------------------------------------------------------
+
+class TestDecodeProjectName(unittest.TestCase):
+    def test_home_prefix_stripped(self):
+        # /home/user/my-project → -home-user-my-project → my-project
+        self.assertEqual(cu.decode_project_name("-home-user-my-project"), "my-project")
+
+    def test_deep_path(self):
+        # /home/user/src/my-app → -home-user-src-my-app → src-my-app
+        self.assertEqual(cu.decode_project_name("-home-user-src-my-app"), "src-my-app")
+
+    def test_no_home_prefix(self):
+        # Paths that don't start with home- are returned as-is (minus leading -)
+        self.assertEqual(cu.decode_project_name("-srv-myapp"), "srv-myapp")
+
+    def test_empty_string(self):
+        result = cu.decode_project_name("")
+        self.assertIsInstance(result, str)
+
+    def test_just_dashes(self):
+        result = cu.decode_project_name("---")
+        self.assertIsInstance(result, str)
+
+
+class TestProgressBar(unittest.TestCase):
+    def test_zero(self):
+        self.assertEqual(cu.progress_bar(0.0, width=4), "[....]")
+
+    def test_full(self):
+        self.assertEqual(cu.progress_bar(1.0, width=4), "[####]")
+
+    def test_half(self):
+        self.assertEqual(cu.progress_bar(0.5, width=4), "[##..]")
+
+    def test_clamps_above_one(self):
+        self.assertEqual(cu.progress_bar(1.5, width=4), "[####]")
+
+    def test_clamps_below_zero(self):
+        self.assertEqual(cu.progress_bar(-0.5, width=4), "[....]")
+
+    def test_custom_fill_empty(self):
+        result = cu.progress_bar(0.5, width=4, fill='X', empty='o')
+        self.assertEqual(result, "[XXoo]")
+
+    def test_default_width(self):
+        result = cu.progress_bar(0.5)
+        self.assertEqual(len(result), 22)  # [####...] = 2 + 20 = 22
+
+
+class TestLoadJsonlByProject(unittest.TestCase):
+    def _write_jsonl(self, path, records):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            for r in records:
+                f.write(json.dumps(r) + "\n")
+
+    def _make_record(self, hours_ago=1, inp=100, out=50):
+        dt = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
+        return {
+            "timestamp": dt.isoformat(),
+            "message": {
+                "usage": {
+                    "input_tokens": inp,
+                    "output_tokens": out,
+                    "cache_read_input_tokens": 0,
+                    "cache_creation_input_tokens": 0,
+                }
+            },
+        }
+
+    def test_groups_by_project(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            proj_a = os.path.join(tmpdir, "-home-user-proj-a")
+            proj_b = os.path.join(tmpdir, "-home-user-proj-b")
+            self._write_jsonl(
+                os.path.join(proj_a, "session.jsonl"),
+                [self._make_record(1), self._make_record(2)],
+            )
+            self._write_jsonl(
+                os.path.join(proj_b, "session.jsonl"),
+                [self._make_record(1)],
+            )
+            with patch.object(cu, "CLAUDE_PROJECTS", tmpdir):
+                result = cu.load_jsonl_records_by_project()
+            self.assertIn("proj-a", result)
+            self.assertIn("proj-b", result)
+            self.assertEqual(len(result["proj-a"]), 2)
+            self.assertEqual(len(result["proj-b"]), 1)
+
+    def test_empty_dir(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.object(cu, "CLAUDE_PROJECTS", tmpdir):
+                result = cu.load_jsonl_records_by_project()
+            self.assertEqual(result, {})
+
+    def test_missing_dir(self):
+        with patch.object(cu, "CLAUDE_PROJECTS", "/nonexistent/path"):
+            result = cu.load_jsonl_records_by_project()
+        self.assertEqual(result, {})
+
+
+class TestRenderDashboard(unittest.TestCase):
+    """Smoke tests: verify render_dashboard() produces well-formed output."""
+
+    _NOW = 1_000_000.0
+
+    def _rl(self):
+        return {
+            "fetched_at": self._NOW - 10,
+            "util_5h": 0.78,
+            "util_7d": 0.84,
+            "reset_5h": int(self._NOW) + 10_020,
+            "reset_7d": int(self._NOW) + 345_600,
+            "status_5h": "allowed",
+            "status_7d": "allowed_warning",
+        }
+
+    def _settings(self, provider="auto", realtime=False):
+        return {"provider": provider, "realtime": realtime, "cache_ttl": 300}
+
+    def _records(self):
+        dt = datetime.now(timezone.utc) - timedelta(hours=1)
+        usage = {
+            "input_tokens": 1000,
+            "output_tokens": 500,
+            "cache_read_input_tokens": 200,
+            "cache_creation_input_tokens": 100,
+        }
+        return [(dt, usage)]
+
+    def test_output_is_string(self):
+        with patch("time.time", return_value=self._NOW), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            out = cu.render_dashboard(self._rl(), self._records(), {}, self._settings())
+        self.assertIsInstance(out, str)
+
+    def test_contains_rate_limit_pct(self):
+        with patch("time.time", return_value=self._NOW), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            # anthropic override so rate-limit block is rendered
+            s = self._settings(provider="anthropic")
+            out = cu.render_dashboard(self._rl(), self._records(), {}, s)
+        self.assertIn("78%", out)
+        self.assertIn("84%", out)
+
+    def test_contains_cost_section(self):
+        with patch("time.time", return_value=self._NOW), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            out = cu.render_dashboard(self._rl(), self._records(), {}, self._settings())
+        self.assertIn("Token Usage & Cost", out)
+
+    def test_contains_projects_section(self):
+        with patch("time.time", return_value=self._NOW), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            proj = {"my-app": self._records()}
+            out = cu.render_dashboard(self._rl(), self._records(), proj, self._settings())
+        self.assertIn("Top Projects", out)
+        self.assertIn("my-app", out)
+
+    def test_no_rl_data_shows_no_data(self):
+        with patch("time.time", return_value=self._NOW), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            s = self._settings(provider="anthropic")
+            out = cu.render_dashboard(None, [], {}, s)
+        self.assertIn("[no data]", out)
+
+    def test_bedrock_provider_hides_rate_limit(self):
+        with patch("time.time", return_value=self._NOW), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            s = self._settings(provider="other")
+            out = cu.render_dashboard(None, [], {}, s)
+        self.assertIn("not available", out)
+
+    def test_box_lines_consistent_width(self):
+        with patch("time.time", return_value=self._NOW), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            out = cu.render_dashboard(self._rl(), self._records(), {}, self._settings())
+        box_lines = [ln for ln in out.splitlines() if ln.startswith('+') or ln.startswith('|')]
+        widths = {len(ln) for ln in box_lines}
+        self.assertEqual(len(widths), 1, f"Inconsistent box widths: {widths}")
+
+
 if __name__ == "__main__":
     unittest.main()
