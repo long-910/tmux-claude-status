@@ -6,11 +6,12 @@
 #   set -g @plugin 'long-910/claude-tmux-status'
 #
 # Optional settings (set before the @plugin line):
-#   set -g @claude-tmux-toggle-key   "U"      # keybinding to toggle percent/cost (default: U)
-#   set -g @claude-tmux-install-hook "true"   # auto-install Claude Code Stop hook (default: true)
-#   set -g @claude-tmux-auto-status  "true"   # auto-configure status-right (default: true)
-#   set -g @claude-tmux-realtime     "false"  # enable 5-min API polling (default: false)
-#   set -g @claude-tmux-cache-ttl   "300"    # cache TTL in seconds (default: 300)
+#   set -g @claude-tmux-toggle-key    "U"      # keybinding to toggle percent/cost (default: U)
+#   set -g @claude-tmux-dashboard-key "B"      # keybinding to open dashboard popup (default: B)
+#   set -g @claude-tmux-install-hook  "true"   # auto-install Claude Code Stop hook (default: true)
+#   set -g @claude-tmux-auto-status   "true"   # auto-configure status-right (default: true)
+#   set -g @claude-tmux-realtime      "false"  # enable 5-min API polling (default: false)
+#   set -g @claude-tmux-cache-ttl    "300"    # cache TTL in seconds (default: 300)
 
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="$CURRENT_DIR/scripts"
@@ -76,7 +77,15 @@ configure_keybinding() {
     tmux bind-key "$key" run-shell "\"$BIN\" toggle && tmux refresh-client -S"
 }
 
-# ── 5. Install Claude Code Stop hook ─────────────────────────────────────────
+# ── 5. Set up dashboard keybinding ───────────────────────────────────────────
+configure_dashboard_keybinding() {
+    local key
+    key=$(get_opt "dashboard-key" "B")
+    [ "$key" = "none" ] && return 0
+    tmux bind-key "$key" display-popup -E -w 82 -h 40 "\"$BIN\" dashboard"
+}
+
+# ── 6. Install Claude Code Stop hook ─────────────────────────────────────────
 configure_hook() {
     local install_hook
     install_hook=$(get_opt "install-hook" "true")
@@ -88,5 +97,6 @@ configure_hook() {
 install_script
 configure_settings
 configure_keybinding
+configure_dashboard_keybinding
 configure_status
 configure_hook

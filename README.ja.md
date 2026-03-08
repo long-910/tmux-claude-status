@@ -78,11 +78,12 @@ set -g @plugin 'long-910/claude-tmux-status'
 
 ```tmux
 # すべてオプション（デフォルト値を示す）:
-set -g @claude-tmux-toggle-key   "U"      # <prefix>+U でパーセント/コスト切替
-set -g @claude-tmux-install-hook "true"   # Claude Code Stop フックを自動設定
-set -g @claude-tmux-auto-status  "true"   # status-right を自動設定
-set -g @claude-tmux-realtime     "false"  # 5分ごとの API ポーリングを有効化
-set -g @claude-tmux-cache-ttl   "300"    # キャッシュ有効期間（秒）
+set -g @claude-tmux-toggle-key    "U"      # <prefix>+U でパーセント/コスト切替
+set -g @claude-tmux-dashboard-key "B"      # <prefix>+B でダッシュボード popup を開く（tmux 3.2+）
+set -g @claude-tmux-install-hook  "true"   # Claude Code Stop フックを自動設定
+set -g @claude-tmux-auto-status   "true"   # status-right を自動設定
+set -g @claude-tmux-realtime      "false"  # 5分ごとの API ポーリングを有効化
+set -g @claude-tmux-cache-ttl    "300"    # キャッシュ有効期間（秒）
 ```
 
 ### GitHub Release からインストール
@@ -103,6 +104,7 @@ chmod +x ~/.local/bin/claude-usage
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
+bind B display-popup -E -w 82 -h 40 "claude-usage dashboard"
 ```
 
 tmux を再読み込みし、Stop フックを設定：
@@ -184,6 +186,9 @@ bash uninstall.sh
 | `claude-usage cost` | コスト表示（一時的） | なし |
 | `claude-usage long` | 詳細表示 | Claude 使用時のみ |
 | `claude-usage json` | JSON 出力 | Claude 使用時のみ |
+| `claude-usage dashboard` | インタラクティブダッシュボード | Claude 使用時のみ |
+| `claude-usage --version` | バージョン表示して終了 | なし |
+| `claude-usage --help` | ヘルプ表示して終了 | なし |
 | `claude-usage --install-hook` | Stop フックを設定 | なし |
 | `claude-usage --uninstall-hook` | Stop フックを削除 | なし |
 
@@ -194,6 +199,48 @@ bash uninstall.sh
 ```
 5h:$14.21 day:$14.21 7d:$53.17
 ```
+
+### ダッシュボード
+
+`<prefix> + B`（または `claude-usage dashboard`）でフルスクリーンのダッシュボードを開きます。
+popup ウィンドウには **tmux 3.2+** が必要です。通常のターミナルでも動作します。
+
+```
++==============================================================================+
+|                            Claude Usage Dashboard                            |
++==============================================================================+
+|   Rate Limits                                                     [just now] |
+|                                                                              |
+|   5h:  78%  [###############.....]  reset 2h47m       (allowed_warning)      |
+|   7d:  84%  [################....]  reset 5.1d        (allowed_warning)      |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Token Usage & Cost                                                         |
+|                                                                              |
+|               Input     Output    CacheRd    CacheWr       Cost              |
+|       5h      38.5K     127.8K      24.6M       1.3M     $14.21              |
+|    Today      38.5K     127.8K      24.6M       1.3M     $14.21              |
+|       7d      80.0K     468.9K      89.5M       5.1M     $53.17              |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Top Projects  (7-day cost)                                                 |
+|                                                                              |
+|   my-app                    $28.34  [##########........]  53%                |
+|   claude-plugin             $14.12  [#####.............]  27%                |
+|   dotfiles                  $10.71  [####..............]  20%                |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Provider: anthropic(auto)  |  Mode: default(no API)  |  Display: percent   |
++==============================================================================+
+
+  [r] refresh    [w] toggle watch(30s)    [q] quit
+```
+
+| キー | 操作 |
+|------|------|
+| `r` | 即時リフレッシュ |
+| `w` | 30秒自動更新（ウォッチモード）の切替 |
+| `q` / `Esc` | 終了 |
 
 ### `long` モード出力例
 

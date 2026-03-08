@@ -79,11 +79,12 @@ Then press `<prefix> + I` to install.
 
 ```tmux
 # All options are optional — shown with their defaults:
-set -g @claude-tmux-toggle-key   "U"      # <prefix>+U toggles percent/cost
-set -g @claude-tmux-install-hook "true"   # auto-install Claude Code Stop hook
-set -g @claude-tmux-auto-status  "true"   # auto-configure status-right
-set -g @claude-tmux-realtime     "false"  # enable 5-min API polling
-set -g @claude-tmux-cache-ttl   "300"    # cache TTL in seconds
+set -g @claude-tmux-toggle-key    "U"      # <prefix>+U toggles percent/cost
+set -g @claude-tmux-dashboard-key "B"      # <prefix>+B opens dashboard popup (tmux 3.2+)
+set -g @claude-tmux-install-hook  "true"   # auto-install Claude Code Stop hook
+set -g @claude-tmux-auto-status   "true"   # auto-configure status-right
+set -g @claude-tmux-realtime      "false"  # enable 5-min API polling
+set -g @claude-tmux-cache-ttl    "300"    # cache TTL in seconds
 ```
 
 ### Install from GitHub Release
@@ -104,6 +105,7 @@ Then configure tmux manually. Add to `~/.tmux.conf`:
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
+bind B display-popup -E -w 82 -h 40 "claude-usage dashboard"
 ```
 
 Reload tmux and set up the Stop hook:
@@ -185,6 +187,9 @@ This removes:
 | `claude-usage cost` | Show cost (one-time) | No |
 | `claude-usage long` | Full breakdown | Only if Claude was active |
 | `claude-usage json` | JSON output | Only if Claude was active |
+| `claude-usage dashboard` | Interactive full-screen dashboard | Only if Claude was active |
+| `claude-usage --version` | Show version and exit | No |
+| `claude-usage --help` | Show help and exit | No |
 | `claude-usage --install-hook` | Add Stop hook to Claude Code | No |
 | `claude-usage --uninstall-hook` | Remove Stop hook from Claude Code | No |
 
@@ -195,6 +200,48 @@ Press `<prefix> + U` (or run `claude-usage toggle`) to switch to cost display:
 ```
 5h:$14.21 day:$14.21 7d:$53.17
 ```
+
+### Dashboard
+
+Press `<prefix> + B` (or run `claude-usage dashboard`) to open a full-screen dashboard.
+Requires **tmux 3.2+** for the popup window. Runs in any terminal otherwise.
+
+```
++==============================================================================+
+|                            Claude Usage Dashboard                            |
++==============================================================================+
+|   Rate Limits                                                     [just now] |
+|                                                                              |
+|   5h:  78%  [###############.....]  reset 2h47m       (allowed_warning)      |
+|   7d:  84%  [################....]  reset 5.1d        (allowed_warning)      |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Token Usage & Cost                                                         |
+|                                                                              |
+|               Input     Output    CacheRd    CacheWr       Cost              |
+|       5h      38.5K     127.8K      24.6M       1.3M     $14.21              |
+|    Today      38.5K     127.8K      24.6M       1.3M     $14.21              |
+|       7d      80.0K     468.9K      89.5M       5.1M     $53.17              |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Top Projects  (7-day cost)                                                 |
+|                                                                              |
+|   my-app                    $28.34  [##########........]  53%                |
+|   claude-plugin             $14.12  [#####.............]  27%                |
+|   dotfiles                  $10.71  [####..............]  20%                |
+|                                                                              |
++------------------------------------------------------------------------------+
+|   Provider: anthropic(auto)  |  Mode: default(no API)  |  Display: percent   |
++==============================================================================+
+
+  [r] refresh    [w] toggle watch(30s)    [q] quit
+```
+
+| Key | Action |
+|-----|--------|
+| `r` | Refresh data immediately |
+| `w` | Toggle 30-second auto-watch mode |
+| `q` / `Esc` | Quit |
 
 ### `long` mode output
 
