@@ -54,6 +54,7 @@ ${MARKER}
 set -g status-right-length 200
 set -g status-right "${STATUS_RIGHT}"
 bind U run-shell "\"${BIN}\" toggle && tmux refresh-client -S"
+bind B display-popup -E -w 82 -h 40 "\"${BIN}\" dashboard"
 EOF
     echo "[ok] Added to $TMUX_CONF"
 fi
@@ -79,4 +80,7 @@ echo "  claude-usage              # status display"
 echo "  claude-usage --refresh    # force API update"
 echo "  claude-usage toggle       # switch percent/cost"
 echo "  claude-usage long         # full breakdown"
-echo "  <prefix>+U                # toggle in tmux"
+echo "  claude-usage dashboard    # full-screen dashboard"
+echo "  claude-usage --version    # show version"
+echo "  <prefix>+U                # toggle percent/cost in tmux"
+echo "  <prefix>+B                # open dashboard popup in tmux (tmux 3.2+)"

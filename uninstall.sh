@@ -34,8 +34,8 @@ if [ -f "$TMUX_CONF" ] && grep -q "$MARKER" "$TMUX_CONF"; then
 import re, os, pathlib
 path = pathlib.Path(os.path.expanduser("~/.tmux.conf"))
 content = path.read_text()
-# Remove optional blank line before marker + marker + up to 4 following lines
-content = re.sub(r'\n+# claude-tmux-status\n(?:[^\n]*\n){1,4}', '\n', content)
+# Remove optional blank lines before marker + marker + all non-empty lines that follow
+content = re.sub(r'\n+# claude-tmux-status\n(?:[^\n]+\n)*', '\n', content)
 path.write_text(content)
 PYEOF
     echo "[ok] Removed claude-tmux-status block from $TMUX_CONF"
