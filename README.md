@@ -105,7 +105,7 @@ Then configure tmux manually. Add to `~/.tmux.conf`:
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
-bind B display-popup -E -w 82 -h 40 "claude-usage dashboard"
+bind B display-popup -E -w 82 -h 90% "claude-usage dashboard"
 ```
 
 Reload tmux and set up the Stop hook:

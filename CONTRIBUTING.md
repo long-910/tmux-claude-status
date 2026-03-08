@@ -73,7 +73,7 @@ claude-tmux-status/
    - Uses `tty` + `termios` + `select` (stdlib) for raw keypress input with timeout
    - Decodes project folder names via `decode_project_name()` (path encoding: `/` → `-`)
    - Non-TTY safe: prints once and exits when stdin is not a terminal
-   - Invoked as a tmux popup via `display-popup -E -w 82 -h 40` (requires tmux 3.2+)
+   - Invoked as a tmux popup via `display-popup -E -w 82 -h 90%` (requires tmux 3.2+)
 
 ### Settings file
 

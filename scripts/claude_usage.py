@@ -56,7 +56,7 @@ DEFAULT_SETTINGS = {"realtime": False, "cache_ttl": 300, "provider": "auto"}
 PRICING = {"input": 3.00, "output": 15.00, "cache_read": 0.30, "cache_create": 3.75}
 
 DASH_WIDTH = 78  # inner width between '+' delimiters (total box = 80 cols)
-VERSION    = "0.7.0"
+VERSION    = "0.7.1"
 
 
 # -- Settings -----------------------------------------------------------------
