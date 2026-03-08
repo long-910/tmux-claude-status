@@ -187,6 +187,7 @@ bash uninstall.sh
 | `claude-usage long` | 詳細表示 | Claude 使用時のみ |
 | `claude-usage json` | JSON 出力 | Claude 使用時のみ |
 | `claude-usage dashboard` | インタラクティブダッシュボード | Claude 使用時のみ |
+| `claude-usage --version` | バージョン表示して終了 | なし |
 | `claude-usage --install-hook` | Stop フックを設定 | なし |
 | `claude-usage --uninstall-hook` | Stop フックを削除 | なし |
 

@@ -19,7 +19,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`decode_project_name()`**: converts Claude Code's encoded project folder names (`-home-user-proj`) to human-readable labels
 - **`load_jsonl_records_by_project()`**: groups JSONL token records by project for per-project cost breakdown
 - **`progress_bar()`**: fixed-width ASCII progress bar renderer (used in both dashboard and available for extension)
-- 22 new unit tests: `TestDecodeProjectName` (5), `TestProgressBar` (7), `TestLoadJsonlByProject` (3), `TestRenderDashboard` (7) — total 87 tests
+- **`--version` / `-V` flag**: prints `claude-usage X.Y.Z` and exits; version also appears right-aligned in the dashboard status bar and as a `"version"` field in `json` output
+- **`VERSION` constant** (`"0.7.0"`) defined at module level — single source of truth for all version surfaces
+- 27 new unit tests: `TestVersion` (5), `TestDecodeProjectName` (5), `TestProgressBar` (7), `TestLoadJsonlByProject` (3), `TestRenderDashboard` (7) — total 92 tests
 
 ### Notes
 - tmux popup (`display-popup`) requires **tmux 3.2+**. The `dashboard` command itself works in any terminal without tmux.

@@ -511,6 +511,43 @@ class TestShortPercent(unittest.TestCase):
 # Dashboard helpers
 # ---------------------------------------------------------------------------
 
+class TestVersion(unittest.TestCase):
+    def test_version_constant_is_string(self):
+        self.assertIsInstance(cu.VERSION, str)
+
+    def test_version_format(self):
+        parts = cu.VERSION.split(".")
+        self.assertEqual(len(parts), 3, "VERSION must be semver X.Y.Z")
+        for part in parts:
+            self.assertTrue(part.isdigit(), f"Non-numeric version component: {part!r}")
+
+    def test_version_in_json_output(self):
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"), \
+             patch.object(cu, "CLAUDE_PROJECTS", "/nonexistent"), \
+             patch.object(cu, "MODE_FILE", "/nonexistent"):
+            settings = cu.load_settings()
+            # Simulate json command output construction
+            now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+            out = {
+                "version": cu.VERSION,
+                "provider": cu.detect_provider(settings),
+            }
+        self.assertEqual(out["version"], cu.VERSION)
+
+    def test_version_in_dashboard_render(self):
+        with patch("time.time", return_value=1_000_000.0), \
+             patch.object(cu, "CREDENTIALS_FILE", "/nonexistent"):
+            out = cu.render_dashboard(None, [], {}, cu.load_settings())
+        self.assertIn(f"v{cu.VERSION}", out)
+
+    def test_cli_version_flag(self, *_):
+        for flag in ("--version", "-V"):
+            with patch.object(sys, "argv", ["claude-usage", flag]), \
+                 patch("sys.stdout", new_callable=__import__("io").StringIO) as mock_out:
+                cu.main()
+            self.assertIn(cu.VERSION, mock_out.getvalue())
+
+
 class TestDecodeProjectName(unittest.TestCase):
     def test_home_prefix_stripped(self):
         # /home/user/my-project → -home-user-my-project → my-project

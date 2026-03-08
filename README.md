@@ -188,6 +188,7 @@ This removes:
 | `claude-usage long` | Full breakdown | Only if Claude was active |
 | `claude-usage json` | JSON output | Only if Claude was active |
 | `claude-usage dashboard` | Interactive full-screen dashboard | Only if Claude was active |
+| `claude-usage --version` | Show version and exit | No |
 | `claude-usage --install-hook` | Add Stop hook to Claude Code | No |
 | `claude-usage --uninstall-hook` | Remove Stop hook from Claude Code | No |
 

@@ -22,6 +22,7 @@ Commands:
   claude-usage cost         force cost display
   claude-usage toggle       switch percent / cost display
   claude-usage dashboard    interactive full-screen dashboard (tmux popup)
+  claude-usage --version    show version and exit
   claude-usage --refresh    force API update (for hooks / manual)
   claude-usage --install-hook  add Stop hook to ~/.claude/settings.json
 
@@ -54,6 +55,7 @@ DEFAULT_SETTINGS = {"realtime": False, "cache_ttl": 300, "provider": "auto"}
 PRICING = {"input": 3.00, "output": 15.00, "cache_read": 0.30, "cache_create": 3.75}
 
 DASH_WIDTH = 78  # inner width between '+' delimiters (total box = 80 cols)
+VERSION    = "0.7.0"
 
 
 # -- Settings -----------------------------------------------------------------
@@ -671,6 +673,7 @@ def render_dashboard(rl, records, proj_records, settings):
         f"  |  Mode: {mode_lbl}"
         f"  |  Display: {get_display_mode()}"
     ))
+    L.append(_drow2("", f"v{VERSION}  "))
     L.append(_dline('='))
     L.append("")
     L.append("  [r] refresh    [w] toggle watch(30s)    [q] quit")
@@ -752,6 +755,11 @@ def dashboard_cmd():
 def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else "short"
 
+    if cmd in ("--version", "-V"):
+        sys.stdout.write(f"claude-usage {VERSION}\n")
+        sys.stdout.flush()
+        return
+
     if cmd == "--refresh":
         data = fetch_rate_limit()
         if data:
@@ -822,6 +830,7 @@ def main():
             t = aggregate(records, since)
             return {**t, "cost_usd": round(calc_cost(t), 6)}
         out = {
+            "version":      VERSION,
             "provider":     provider,
             "rate_limit":   rl,
             "cost": {
@@ -837,7 +846,7 @@ def main():
         sys.stdout.flush()
         return
 
-    sys.stderr.write(f"Usage: {sys.argv[0]} [short|long|json|cost|toggle|dashboard|--refresh|--install-hook|--uninstall-hook]\n")
+    sys.stderr.write(f"Usage: {sys.argv[0]} [short|long|json|cost|toggle|dashboard|--version|--refresh|--install-hook|--uninstall-hook]\n")
     sys.exit(1)
 
 
