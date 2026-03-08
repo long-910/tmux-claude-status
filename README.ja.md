@@ -79,7 +79,7 @@ set -g @plugin 'long-910/claude-tmux-status'
 ```tmux
 # すべてオプション（デフォルト値を示す）:
 set -g @claude-tmux-toggle-key    "U"      # <prefix>+U でパーセント/コスト切替
-set -g @claude-tmux-dashboard-key "D"      # <prefix>+D でダッシュボード popup を開く（tmux 3.2+）
+set -g @claude-tmux-dashboard-key "B"      # <prefix>+B でダッシュボード popup を開く（tmux 3.2+）
 set -g @claude-tmux-install-hook  "true"   # Claude Code Stop フックを自動設定
 set -g @claude-tmux-auto-status   "true"   # status-right を自動設定
 set -g @claude-tmux-realtime      "false"  # 5分ごとの API ポーリングを有効化
@@ -104,7 +104,7 @@ chmod +x ~/.local/bin/claude-usage
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
-bind D display-popup -E -w 82 -h 40 "claude-usage dashboard"
+bind B display-popup -E -w 82 -h 40 "claude-usage dashboard"
 ```
 
 tmux を再読み込みし、Stop フックを設定：
@@ -201,7 +201,7 @@ bash uninstall.sh
 
 ### ダッシュボード
 
-`<prefix> + D`（または `claude-usage dashboard`）でフルスクリーンのダッシュボードを開きます。
+`<prefix> + B`（または `claude-usage dashboard`）でフルスクリーンのダッシュボードを開きます。
 popup ウィンドウには **tmux 3.2+** が必要です。通常のターミナルでも動作します。
 
 ```

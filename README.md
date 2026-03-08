@@ -80,7 +80,7 @@ Then press `<prefix> + I` to install.
 ```tmux
 # All options are optional — shown with their defaults:
 set -g @claude-tmux-toggle-key    "U"      # <prefix>+U toggles percent/cost
-set -g @claude-tmux-dashboard-key "D"      # <prefix>+D opens dashboard popup (tmux 3.2+)
+set -g @claude-tmux-dashboard-key "B"      # <prefix>+B opens dashboard popup (tmux 3.2+)
 set -g @claude-tmux-install-hook  "true"   # auto-install Claude Code Stop hook
 set -g @claude-tmux-auto-status   "true"   # auto-configure status-right
 set -g @claude-tmux-realtime      "false"  # enable 5-min API polling
@@ -105,7 +105,7 @@ Then configure tmux manually. Add to `~/.tmux.conf`:
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
-bind D display-popup -E -w 82 -h 40 "claude-usage dashboard"
+bind B display-popup -E -w 82 -h 40 "claude-usage dashboard"
 ```
 
 Reload tmux and set up the Stop hook:
@@ -202,7 +202,7 @@ Press `<prefix> + U` (or run `claude-usage toggle`) to switch to cost display:
 
 ### Dashboard
 
-Press `<prefix> + D` (or run `claude-usage dashboard`) to open a full-screen dashboard.
+Press `<prefix> + B` (or run `claude-usage dashboard`) to open a full-screen dashboard.
 Requires **tmux 3.2+** for the popup window. Runs in any terminal otherwise.
 
 ```

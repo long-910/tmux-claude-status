@@ -23,6 +23,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`VERSION` constant** (`"0.7.0"`) defined at module level — single source of truth for all version surfaces
 - 27 new unit tests: `TestVersion` (5), `TestDecodeProjectName` (5), `TestProgressBar` (7), `TestLoadJsonlByProject` (3), `TestRenderDashboard` (7) — total 92 tests
 
+### Fixed
+- **Dashboard keybinding default changed `"D"` → `"B"`**: `<prefix>+D` is bound to `choose-client -Z` in tmux by default, causing a conflict. The new default `B` (mnemonic: **B**oard) is free in all standard tmux configurations. Users who set `@claude-tmux-dashboard-key "D"` explicitly should update to `"B"` or another free key.
+
 ### Notes
 - tmux popup (`display-popup`) requires **tmux 3.2+**. The `dashboard` command itself works in any terminal without tmux.
 

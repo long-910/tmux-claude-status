@@ -78,7 +78,7 @@ set -g @plugin 'long-910/claude-tmux-status'
 ```tmux
 # 以下均为可选项（括号内为默认值）：
 set -g @claude-tmux-toggle-key    "U"      # <prefix>+U 切换百分比/费用显示
-set -g @claude-tmux-dashboard-key "D"      # <prefix>+D 打开仪表盘弹窗（tmux 3.2+）
+set -g @claude-tmux-dashboard-key "B"      # <prefix>+B 打开仪表盘弹窗（tmux 3.2+）
 set -g @claude-tmux-install-hook  "true"   # 自动安装 Claude Code Stop 钩子
 set -g @claude-tmux-auto-status   "true"   # 自动配置 status-right
 set -g @claude-tmux-realtime      "false"  # 启用 5 分钟轮询（消耗 token）
@@ -103,7 +103,7 @@ chmod +x ~/.local/bin/claude-usage
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
-bind D display-popup -E -w 82 -h 40 "claude-usage dashboard"
+bind B display-popup -E -w 82 -h 40 "claude-usage dashboard"
 ```
 
 重新加载 tmux 并安装 Stop 钩子：
@@ -200,7 +200,7 @@ bash uninstall.sh
 
 ### 仪表盘
 
-按 `<prefix> + D`（或运行 `claude-usage dashboard`）打开全屏仪表盘。
+按 `<prefix> + B`（或运行 `claude-usage dashboard`）打开全屏仪表盘。
 弹窗功能需要 **tmux 3.2+**，也可在任意终端中直接运行。
 
 ```

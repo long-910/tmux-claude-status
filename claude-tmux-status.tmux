@@ -7,7 +7,7 @@
 #
 # Optional settings (set before the @plugin line):
 #   set -g @claude-tmux-toggle-key    "U"      # keybinding to toggle percent/cost (default: U)
-#   set -g @claude-tmux-dashboard-key "D"      # keybinding to open dashboard popup (default: D)
+#   set -g @claude-tmux-dashboard-key "B"      # keybinding to open dashboard popup (default: B)
 #   set -g @claude-tmux-install-hook  "true"   # auto-install Claude Code Stop hook (default: true)
 #   set -g @claude-tmux-auto-status   "true"   # auto-configure status-right (default: true)
 #   set -g @claude-tmux-realtime      "false"  # enable 5-min API polling (default: false)
@@ -80,7 +80,7 @@ configure_keybinding() {
 # ── 5. Set up dashboard keybinding ───────────────────────────────────────────
 configure_dashboard_keybinding() {
     local key
-    key=$(get_opt "dashboard-key" "D")
+    key=$(get_opt "dashboard-key" "B")
     [ "$key" = "none" ] && return 0
     tmux bind-key "$key" display-popup -E -w 82 -h 40 "\"$BIN\" dashboard"
 }
