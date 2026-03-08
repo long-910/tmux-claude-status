@@ -187,6 +187,7 @@ bash uninstall.sh
 | `claude-usage json` | JSON 输出 | 仅 Claude 活跃时 |
 | `claude-usage dashboard` | 交互式全屏仪表盘 | 仅 Claude 活跃时 |
 | `claude-usage --version` | 显示版本并退出 | 否 |
+| `claude-usage --help` | 显示帮助并退出 | 否 |
 | `claude-usage --install-hook` | 安装 Stop 钩子 | 否 |
 | `claude-usage --uninstall-hook` | 删除 Stop 钩子 | 否 |
 

@@ -23,6 +23,7 @@ Commands:
   claude-usage toggle       switch percent / cost display
   claude-usage dashboard    interactive full-screen dashboard (tmux popup)
   claude-usage --version    show version and exit
+  claude-usage --help       show help and exit
   claude-usage --refresh    force API update (for hooks / manual)
   claude-usage --install-hook  add Stop hook to ~/.claude/settings.json
 
@@ -760,6 +761,45 @@ def main():
         sys.stdout.flush()
         return
 
+    if cmd in ("--help", "-h"):
+        sys.stdout.write(f"""\
+claude-usage {VERSION} — Claude Code usage for tmux status bar
+
+USAGE
+  claude-usage [COMMAND]
+
+STATUS BAR COMMANDS
+  (none) / short    Current mode display  (used in tmux status-right)
+  cost              Cost display, one-time  (ignores toggle state)
+  long              Full breakdown: rate limits + token cost
+  json              Structured JSON output
+
+INTERACTIVE COMMANDS
+  toggle            Switch percent ↔ cost display  [<prefix>+U in tmux]
+  dashboard         Full-screen popup dashboard     [<prefix>+B in tmux]
+
+UTILITY
+  --refresh         Force one Anthropic API call and update cache
+  --install-hook    Add Claude Code Stop hook to ~/.claude/settings.json
+  --uninstall-hook  Remove Claude Code Stop hook
+  --version, -V     Show version and exit
+  --help,    -h     Show this help
+
+SETTINGS  (~/.claude/claude-tmux-status.json)
+  realtime   false    true = poll API every cache_ttl seconds (costs tokens)
+  cache_ttl  300      Cache TTL in seconds
+  provider   "auto"   auto | anthropic | bedrock | other
+
+TMUX KEYBINDINGS  (configured by install.sh / TPM)
+  <prefix>+U   Toggle percent ↔ cost
+  <prefix>+B   Open dashboard popup  (requires tmux 3.2+)
+
+MORE INFO
+  https://github.com/long-910/claude-tmux-status
+""")
+        sys.stdout.flush()
+        return
+
     if cmd == "--refresh":
         data = fetch_rate_limit()
         if data:
@@ -846,7 +886,7 @@ def main():
         sys.stdout.flush()
         return
 
-    sys.stderr.write(f"Usage: {sys.argv[0]} [short|long|json|cost|toggle|dashboard|--version|--refresh|--install-hook|--uninstall-hook]\n")
+    sys.stderr.write(f"Unknown command: {cmd!r}\nRun 'claude-usage --help' for usage.\n")
     sys.exit(1)
 
 

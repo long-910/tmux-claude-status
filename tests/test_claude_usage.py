@@ -548,6 +548,52 @@ class TestVersion(unittest.TestCase):
             self.assertIn(cu.VERSION, mock_out.getvalue())
 
 
+class TestHelp(unittest.TestCase):
+    def _run_help(self, flag):
+        with patch.object(sys, "argv", ["claude-usage", flag]), \
+             patch("sys.stdout", new_callable=__import__("io").StringIO) as mock_out:
+            cu.main()
+        return mock_out.getvalue()
+
+    def test_help_flag(self):
+        out = self._run_help("--help")
+        self.assertIn("claude-usage", out)
+        self.assertIn("USAGE", out)
+
+    def test_help_short_flag(self):
+        out = self._run_help("-h")
+        self.assertIn("USAGE", out)
+
+    def test_help_contains_all_sections(self):
+        out = self._run_help("--help")
+        for section in ("STATUS BAR COMMANDS", "INTERACTIVE COMMANDS",
+                        "UTILITY", "SETTINGS", "TMUX KEYBINDINGS"):
+            self.assertIn(section, out, f"Missing section: {section}")
+
+    def test_help_contains_all_commands(self):
+        out = self._run_help("--help")
+        for cmd in ("short", "long", "json", "cost", "toggle", "dashboard",
+                    "--refresh", "--install-hook", "--uninstall-hook",
+                    "--version", "--help"):
+            self.assertIn(cmd, out, f"Missing command: {cmd}")
+
+    def test_help_exit_zero(self):
+        with patch.object(sys, "argv", ["claude-usage", "--help"]), \
+             patch("sys.stdout", new_callable=__import__("io").StringIO):
+            try:
+                cu.main()
+            except SystemExit as e:
+                self.fail(f"--help raised SystemExit({e.code})")
+
+    def test_unknown_command_exits_nonzero(self):
+        with patch.object(sys, "argv", ["claude-usage", "badcmd"]), \
+             patch("sys.stderr", new_callable=__import__("io").StringIO) as mock_err:
+            with self.assertRaises(SystemExit) as ctx:
+                cu.main()
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("claude-usage --help", mock_err.getvalue())
+
+
 class TestDecodeProjectName(unittest.TestCase):
     def test_home_prefix_stripped(self):
         # /home/user/my-project → -home-user-my-project → my-project

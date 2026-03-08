@@ -19,9 +19,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`decode_project_name()`**: converts Claude Code's encoded project folder names (`-home-user-proj`) to human-readable labels
 - **`load_jsonl_records_by_project()`**: groups JSONL token records by project for per-project cost breakdown
 - **`progress_bar()`**: fixed-width ASCII progress bar renderer (used in both dashboard and available for extension)
+- **`--help` / `-h` flag**: structured help with sections STATUS BAR COMMANDS, INTERACTIVE COMMANDS, UTILITY, SETTINGS, TMUX KEYBINDINGS, MORE INFO; exits 0
 - **`--version` / `-V` flag**: prints `claude-usage X.Y.Z` and exits; version also appears right-aligned in the dashboard status bar and as a `"version"` field in `json` output
 - **`VERSION` constant** (`"0.7.0"`) defined at module level — single source of truth for all version surfaces
-- 27 new unit tests: `TestVersion` (5), `TestDecodeProjectName` (5), `TestProgressBar` (7), `TestLoadJsonlByProject` (3), `TestRenderDashboard` (7) — total 92 tests
+- 33 new unit tests: `TestHelp` (6), `TestVersion` (5), `TestDecodeProjectName` (5), `TestProgressBar` (7), `TestLoadJsonlByProject` (3), `TestRenderDashboard` (7) — total 98 tests
 
 ### Fixed
 - **Dashboard keybinding default changed `"D"` → `"B"`**: `<prefix>+D` is bound to `choose-client -Z` in tmux by default, causing a conflict. The new default `B` (mnemonic: **B**oard) is free in all standard tmux configurations. Users who set `@claude-tmux-dashboard-key "D"` explicitly should update to `"B"` or another free key.
