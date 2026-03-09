@@ -103,7 +103,7 @@ chmod +x ~/.local/bin/claude-usage
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
-bind B display-popup -E -w 82 -h 40 "claude-usage dashboard"
+bind B display-popup -E -w 82 -h 90% "claude-usage dashboard"
 ```
 
 重新加载 tmux 并安装 Stop 钩子：

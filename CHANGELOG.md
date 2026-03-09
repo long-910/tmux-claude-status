@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.1] - 2026-03-09
+
+### Fixed
+- **Dashboard popup "height too large" error**: replaced fixed `-h 40` with `-h 90%` in `display-popup` so the popup adapts to the available terminal height instead of failing when the window is shorter than 40 lines
+
+---
+
 ## [0.7.0] - 2026-03-08
 
 ### Added

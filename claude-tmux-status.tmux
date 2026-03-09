@@ -82,7 +82,7 @@ configure_dashboard_keybinding() {
     local key
     key=$(get_opt "dashboard-key" "B")
     [ "$key" = "none" ] && return 0
-    tmux bind-key "$key" display-popup -E -w 82 -h 40 "\"$BIN\" dashboard"
+    tmux bind-key "$key" display-popup -E -w 82 -h 90% "\"$BIN\" dashboard"
 }
 
 # ── 6. Install Claude Code Stop hook ─────────────────────────────────────────

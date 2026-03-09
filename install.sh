@@ -54,7 +54,7 @@ ${MARKER}
 set -g status-right-length 200
 set -g status-right "${STATUS_RIGHT}"
 bind U run-shell "\"${BIN}\" toggle && tmux refresh-client -S"
-bind B display-popup -E -w 82 -h 40 "\"${BIN}\" dashboard"
+bind B display-popup -E -w 82 -h 90% "\"${BIN}\" dashboard"
 EOF
     echo "[ok] Added to $TMUX_CONF"
 fi
