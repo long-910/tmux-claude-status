@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# install.sh - Manual installer for claude-tmux-status
+# install.sh - Manual installer for tmux-claude-status
 # For TPM installation, see README.md
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/long-910/tmux-claude-status/main/install.sh | bash
 #   bash install.sh  (from a local clone)
 set -eu
 
-GITHUB_RAW="https://raw.githubusercontent.com/long-910/claude-tmux-status/main"
+GITHUB_RAW="https://raw.githubusercontent.com/long-910/tmux-claude-status/main"
 BIN_DIR="${HOME}/.local/bin"
 BIN="$BIN_DIR/claude-usage"
 TMUX_CONF="${HOME}/.tmux.conf"
-MARKER="# claude-tmux-status"
+MARKER="# tmux-claude-status"
 
-echo "=== claude-tmux-status manual installer ==="
+echo "=== tmux-claude-status manual installer ==="
 
 # 1. Install script
 mkdir -p "$BIN_DIR"
@@ -41,7 +41,7 @@ fi
 if [ ! -f "$TMUX_CONF" ]; then touch "$TMUX_CONF"; fi
 
 if grep -q "$MARKER" "$TMUX_CONF"; then
-    echo "[skip] tmux config already has claude-tmux-status"
+    echo "[skip] tmux config already has tmux-claude-status"
 else
     if grep -q "tmux-mem-cpu-load" "$TMUX_CONF"; then
         STATUS_RIGHT="#($BIN short) | #[fg=green,bg=black]#(tmux-mem-cpu-load --colors --interval 2)#[default] | %H:%M %Y-%m-%d"
@@ -63,7 +63,7 @@ fi
 python3 "$BIN" --install-hook
 
 # 4. Default settings
-SETTINGS="${HOME}/.claude/claude-tmux-status.json"
+SETTINGS="${HOME}/.claude/tmux-claude-status.json"
 if [ ! -f "$SETTINGS" ] && [ -d "${HOME}/.claude" ]; then
     printf '{\n  "realtime": false,\n  "cache_ttl": 300\n}\n' > "$SETTINGS"
     echo "[ok] Created: $SETTINGS"

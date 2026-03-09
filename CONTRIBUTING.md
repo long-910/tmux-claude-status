@@ -1,10 +1,10 @@
-# Contributing to claude-tmux-status
+# Contributing to tmux-claude-status
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/long-910/claude-tmux-status.git
-cd claude-tmux-status
+git clone https://github.com/long-910/tmux-claude-status.git
+cd tmux-claude-status
 ```
 
 No external dependencies are required to run or develop the project.
@@ -25,9 +25,9 @@ python -m unittest discover tests/ -v
 ## Architecture
 
 ```
-claude-tmux-status/
+tmux-claude-status/
 ├── scripts/claude_usage.py   # Main script: API, cache, formatters, output modes, dashboard
-├── claude-tmux-status.tmux   # TPM entry point: installs script, configures tmux
+├── tmux-claude-status.tmux   # TPM entry point: installs script, configures tmux
 ├── install.sh                # Manual installer
 ├── uninstall.sh              # Manual uninstaller
 └── tests/
@@ -60,7 +60,7 @@ claude-tmux-status/
    - Shows stale cache with `[Xm ago]` indicator when Claude is idle
 
 2. **Realtime mode** — polls every `cache_ttl` seconds regardless of activity:
-   - Enabled via `"realtime": true` in `~/.claude/claude-tmux-status.json`
+   - Enabled via `"realtime": true` in `~/.claude/tmux-claude-status.json`
    - Cost: ~$0.001/day (claude-haiku-4-5, ~9 tokens/call)
 
 3. **Stop hook** — single API call on session end:
@@ -77,7 +77,7 @@ claude-tmux-status/
 
 ### Settings file
 
-`~/.claude/claude-tmux-status.json`
+`~/.claude/tmux-claude-status.json`
 
 ```json
 {

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# claude-tmux-status.tmux
+# tmux-claude-status.tmux
 # TPM (Tmux Plugin Manager) entry point
 #
 # Add to ~/.tmux.conf:
-#   set -g @plugin 'long-910/claude-tmux-status'
+#   set -g @plugin 'long-910/tmux-claude-status'
 #
 # Optional settings (set before the @plugin line):
 #   set -g @claude-tmux-toggle-key    "U"      # keybinding to toggle percent/cost (default: U)
@@ -36,7 +36,7 @@ install_script() {
 
 # ── 2. Create default settings file ───────────────────────────────────────────
 configure_settings() {
-    local settings_file="$HOME/.claude/claude-tmux-status.json"
+    local settings_file="$HOME/.claude/tmux-claude-status.json"
     if [ ! -f "$settings_file" ] && [ -d "$HOME/.claude" ]; then
         local realtime cache_ttl
         realtime=$(get_opt "realtime" "false")
