@@ -6,6 +6,13 @@
 [![tmux 3.0+](https://img.shields.io/badge/tmux-3.0%2B-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-pink?logo=github)](https://github.com/sponsors/long-910)
 
+> **Note:** This repository was renamed from `claude-tmux-status` to `tmux-claude-status` in v0.8.0.
+> If you are using the old plugin name, please update your `~/.tmux.conf`:
+> ```diff
+> - set -g @plugin 'long-910/claude-tmux-status'
+> + set -g @plugin 'long-910/tmux-claude-status'
+> ```
+> Also rename `~/.claude/claude-tmux-status.json` → `~/.claude/tmux-claude-status.json` if it exists.
 
 Display Claude Code **usage** in your tmux status bar — with zero token consumption by default.
 Supports **Claude.ai subscription** (rate-limit %) and **AWS Bedrock / API key** (cost from local JSONL).

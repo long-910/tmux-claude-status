@@ -6,6 +6,14 @@
 [![tmux 3.0+](https://img.shields.io/badge/tmux-3.0%2B-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/long-910?label=Sponsor&logo=GitHub&color=EA4AAA)](https://github.com/sponsors/long-910)
 
+> **お知らせ:** v0.8.0 より、リポジトリ名を `claude-tmux-status` から `tmux-claude-status` に変更しました。
+> 旧プラグイン名をご利用の方は `~/.tmux.conf` を更新してください：
+> ```diff
+> - set -g @plugin 'long-910/claude-tmux-status'
+> + set -g @plugin 'long-910/tmux-claude-status'
+> ```
+> また、`~/.claude/claude-tmux-status.json` が存在する場合は `~/.claude/tmux-claude-status.json` にリネームしてください。
+
 Claude Code の**使用状況**を tmux ステータスバーに表示するツールです。
 デフォルトでは **API コールを一切行いません**。
 **Claude.ai サブスクリプション**（使用率%表示）と **AWS Bedrock / API キー**（ローカル JSONL からのコスト表示）に対応しています。

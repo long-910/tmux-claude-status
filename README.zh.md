@@ -6,6 +6,14 @@
 [![tmux 3.0+](https://img.shields.io/badge/tmux-3.0%2B-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-pink?logo=github)](https://github.com/sponsors/long-910)
 
+> **通知：** 自 v0.8.0 起，仓库已从 `claude-tmux-status` 重命名为 `tmux-claude-status`。
+> 如果您使用的是旧插件名称，请更新 `~/.tmux.conf`：
+> ```diff
+> - set -g @plugin 'long-910/claude-tmux-status'
+> + set -g @plugin 'long-910/tmux-claude-status'
+> ```
+> 如果存在 `~/.claude/claude-tmux-status.json`，请将其重命名为 `~/.claude/tmux-claude-status.json`。
+
 在 tmux 状态栏实时显示 Claude Code **使用情况**。默认情况下**不消耗任何 token**。
 支持 **Claude.ai 订阅**（使用率%显示）和 **AWS Bedrock / API 密钥**（从本地 JSONL 计算费用）。
 
