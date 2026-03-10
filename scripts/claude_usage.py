@@ -27,7 +27,7 @@ Commands:
   claude-usage --refresh    force API update (for hooks / manual)
   claude-usage --install-hook  add Stop hook to ~/.claude/settings.json
 
-Settings: ~/.claude/claude-tmux-status.json
+Settings: ~/.claude/tmux-claude-status.json
   {
     "realtime": false,
     "cache_ttl": 300,
@@ -45,7 +45,7 @@ import urllib.error
 from datetime import datetime, date, timedelta, timezone
 
 CREDENTIALS_FILE = os.path.expanduser("~/.claude/.credentials.json")
-SETTINGS_FILE    = os.path.expanduser("~/.claude/claude-tmux-status.json")
+SETTINGS_FILE    = os.path.expanduser("~/.claude/tmux-claude-status.json")
 MODE_FILE        = os.path.expanduser("~/.claude/tmux-display-mode")
 CACHE_FILE       = os.path.expanduser("~/.claude/tmux-rate-limit-cache.json")
 CLAUDE_PROJECTS  = os.path.expanduser("~/.claude/projects")
@@ -56,7 +56,7 @@ DEFAULT_SETTINGS = {"realtime": False, "cache_ttl": 300, "provider": "auto"}
 PRICING = {"input": 3.00, "output": 15.00, "cache_read": 0.30, "cache_create": 3.75}
 
 DASH_WIDTH = 78  # inner width between '+' delimiters (total box = 80 cols)
-VERSION    = "0.7.1"
+VERSION    = "0.8.0"
 
 
 # -- Settings -----------------------------------------------------------------
@@ -785,7 +785,7 @@ UTILITY
   --version, -V     Show version and exit
   --help,    -h     Show this help
 
-SETTINGS  (~/.claude/claude-tmux-status.json)
+SETTINGS  (~/.claude/tmux-claude-status.json)
   realtime   false    true = poll API every cache_ttl seconds (costs tokens)
   cache_ttl  300      Cache TTL in seconds
   provider   "auto"   auto | anthropic | bedrock | other
@@ -795,7 +795,7 @@ TMUX KEYBINDINGS  (configured by install.sh / TPM)
   <prefix>+B   Open dashboard popup  (requires tmux 3.2+)
 
 MORE INFO
-  https://github.com/long-910/claude-tmux-status
+  https://github.com/long-910/tmux-claude-status
 """)
         sys.stdout.flush()
         return

@@ -5,6 +5,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.8.0] - 2026-03-09
+
+### Changed
+- **Repository renamed** from `claude-tmux-status` to `tmux-claude-status`
+  - TPM plugin line: `set -g @plugin 'long-910/tmux-claude-status'`
+  - GitHub URL: `https://github.com/long-910/tmux-claude-status`
+  - Settings file: `~/.claude/tmux-claude-status.json`
+  - Main entry point: `tmux-claude-status.tmux`
+  - tmux.conf marker: `# tmux-claude-status`
+
+### Migration notes (upgrading from v0.7.x)
+
+1. **TPM users**: update `~/.tmux.conf` plugin line:
+   ```diff
+   - set -g @plugin 'long-910/claude-tmux-status'
+   + set -g @plugin 'long-910/tmux-claude-status'
+   ```
+   Then press `<prefix> + I` to reinstall.
+
+2. **Manual / Release install users**: re-run `install.sh` or update `~/.tmux.conf` manually:
+   - Replace `# claude-tmux-status` marker line with `# tmux-claude-status`
+
+3. **Settings file** (if you customized it): rename the file:
+   ```bash
+   mv ~/.claude/claude-tmux-status.json ~/.claude/tmux-claude-status.json
+   ```
+
+4. **Uninstall old config** (optional cleanup): if you have the old
+   `# claude-tmux-status` block in `~/.tmux.conf`, remove it manually
+   or run `uninstall.sh` from the old clone before switching.
+
+---
+
 ## [0.7.1] - 2026-03-09
 
 ### Fixed

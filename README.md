@@ -1,11 +1,18 @@
-# claude-tmux-status
+# tmux-claude-status
 
-[![CI](https://github.com/long-910/claude-tmux-status/actions/workflows/ci.yml/badge.svg)](https://github.com/long-910/claude-tmux-status/actions/workflows/ci.yml)
+[![CI](https://github.com/long-910/tmux-claude-status/actions/workflows/ci.yml/badge.svg)](https://github.com/long-910/tmux-claude-status/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![tmux 3.0+](https://img.shields.io/badge/tmux-3.0%2B-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-pink?logo=github)](https://github.com/sponsors/long-910)
 
+> **Note:** This repository was renamed from `claude-tmux-status` to `tmux-claude-status` in v0.8.0.
+> If you are using the old plugin name, please update your `~/.tmux.conf`:
+> ```diff
+> - set -g @plugin 'long-910/claude-tmux-status'
+> + set -g @plugin 'long-910/tmux-claude-status'
+> ```
+> Also rename `~/.claude/claude-tmux-status.json` → `~/.claude/tmux-claude-status.json` if it exists.
 
 Display Claude Code **usage** in your tmux status bar — with zero token consumption by default.
 Supports **Claude.ai subscription** (rate-limit %) and **AWS Bedrock / API key** (cost from local JSONL).
@@ -59,7 +66,7 @@ Claude is idle     →  read cache only (no API calls)  →  show age of data
 
 > **Note:** Rate-limit % display has been tested with **Claude.ai Pro plan only**.
 > If the display is incorrect for your plan (Max, Team, Enterprise, Bedrock, etc.),
-> please [file an issue](https://github.com/long-910/claude-tmux-status/issues).
+> please [file an issue](https://github.com/long-910/tmux-claude-status/issues).
 
 ---
 
@@ -70,7 +77,7 @@ Claude is idle     →  read cache only (no API calls)  →  show age of data
 Add to `~/.tmux.conf`:
 
 ```tmux
-set -g @plugin 'long-910/claude-tmux-status'
+set -g @plugin 'long-910/tmux-claude-status'
 ```
 
 Then press `<prefix> + I` to install.
@@ -93,7 +100,7 @@ Download the latest `claude-usage` binary directly — no `git clone` required:
 
 ```bash
 mkdir -p ~/.local/bin
-curl -fsSL https://github.com/long-910/claude-tmux-status/releases/latest/download/claude-usage \
+curl -fsSL https://github.com/long-910/tmux-claude-status/releases/latest/download/claude-usage \
   -o ~/.local/bin/claude-usage
 chmod +x ~/.local/bin/claude-usage
 ```
@@ -101,7 +108,7 @@ chmod +x ~/.local/bin/claude-usage
 Then configure tmux manually. Add to `~/.tmux.conf`:
 
 ```tmux
-# claude-tmux-status
+# tmux-claude-status
 set -g status-right-length 200
 set -g status-right "#(claude-usage short) | %H:%M %Y-%m-%d"
 bind U run-shell "claude-usage toggle && tmux refresh-client -S"
@@ -126,14 +133,14 @@ claude-usage --refresh
 One-liner (no git required):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/long-910/claude-tmux-status/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/long-910/tmux-claude-status/main/install.sh | bash
 ```
 
 Or from a local clone:
 
 ```bash
-git clone https://github.com/long-910/claude-tmux-status.git
-cd claude-tmux-status
+git clone https://github.com/long-910/tmux-claude-status.git
+cd tmux-claude-status
 bash install.sh
 ```
 
@@ -146,7 +153,7 @@ bash install.sh
 Remove the plugin line from `~/.tmux.conf`:
 
 ```tmux
-set -g @plugin 'long-910/claude-tmux-status'
+set -g @plugin 'long-910/tmux-claude-status'
 ```
 
 Then press `<prefix> + alt + u` to uninstall via TPM.
@@ -154,15 +161,15 @@ Then press `<prefix> + alt + u` to uninstall via TPM.
 ### Manual uninstall
 
 ```bash
-cd claude-tmux-status
+cd tmux-claude-status
 bash uninstall.sh
 ```
 
 This removes:
 - `~/.local/bin/claude-usage`
-- The `claude-tmux-status` block from `~/.tmux.conf`
+- The `tmux-claude-status` block from `~/.tmux.conf`
 - The Stop hook from `~/.claude/settings.json`
-- `~/.claude/claude-tmux-status.json` (settings)
+- `~/.claude/tmux-claude-status.json` (settings)
 - `~/.claude/tmux-rate-limit-cache.json` (cache)
 
 ---
@@ -275,7 +282,7 @@ By default, the API is called only when Claude is actively running. When idle, s
 
 ### Settings file
 
-Edit `~/.claude/claude-tmux-status.json`:
+Edit `~/.claude/tmux-claude-status.json`:
 
 ```json
 {

@@ -18,7 +18,7 @@ jobs:
         run: sudo apt-get install -y shellcheck
 
       - name: Shellcheck
-        run: shellcheck install.sh uninstall.sh claude-tmux-status.tmux
+        run: shellcheck install.sh uninstall.sh tmux-claude-status.tmux
 
       - name: Set up Python
         uses: actions/setup-python@v5
