@@ -1,10 +1,13 @@
 # tmux-claude-status
 
+![tmux-claude-status social preview](https://repository-images.githubusercontent.com/1164363900/6febc7d4-834a-4ce2-84f0-6079096511a0)
+
 [![CI](https://github.com/long-910/tmux-claude-status/actions/workflows/ci.yml/badge.svg)](https://github.com/long-910/tmux-claude-status/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![tmux 3.0+](https://img.shields.io/badge/tmux-3.0%2B-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/long-910?label=Sponsor&logo=GitHub&color=EA4AAA)](https://github.com/sponsors/long-910)
+[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-pink?logo=github)](https://github.com/sponsors/long-910)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/long910)
 
 > **お知らせ:** v0.8.0 より、リポジトリ名を `claude-tmux-status` から `tmux-claude-status` に変更しました。
 > 旧プラグイン名をご利用の方は `~/.tmux.conf` を更新してください：
@@ -317,7 +320,7 @@ idle 時は古いキャッシュを `[Xm ago]` 付きで表示し、トークン
 
 ## ライセンス
 
-MIT
+[MIT](LICENSE)
 
 ---
 
