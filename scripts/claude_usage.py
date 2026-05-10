@@ -38,6 +38,7 @@ Settings: ~/.claude/tmux-claude-status.json
 import json
 import os
 import glob
+import subprocess
 import sys
 import time
 import urllib.request
@@ -69,6 +70,39 @@ def load_settings():
         return dict(DEFAULT_SETTINGS)
 
 
+def read_credentials():
+    """Return parsed credentials dict.
+
+    Priority:
+      1. ~/.claude/.credentials.json  (all platforms, Claude Code v1.x)
+      2. macOS Keychain "Claude Code-credentials" (macOS, Claude Code v2+)
+    Returns an empty dict if neither source yields a valid token.
+    """
+    try:
+        with open(CREDENTIALS_FILE) as f:
+            creds = json.load(f)
+        if creds.get("claudeAiOauth", {}).get("accessToken"):
+            return creds
+    except Exception:
+        pass
+
+    if sys.platform == "darwin":
+        try:
+            result = subprocess.run(
+                ["security", "find-generic-password",
+                 "-s", "Claude Code-credentials",
+                 "-a", os.environ.get("USER", ""),
+                 "-w"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode == 0:
+                return json.loads(result.stdout.strip())
+        except Exception:
+            pass
+
+    return {}
+
+
 def detect_provider(settings):
     """Detect the Claude provider.
 
@@ -82,13 +116,9 @@ def detect_provider(settings):
     if override != "auto":
         return "anthropic" if override == "anthropic" else "other"
 
-    try:
-        with open(CREDENTIALS_FILE) as f:
-            creds = json.load(f)
-        if creds.get("claudeAiOauth", {}).get("accessToken"):
-            return "anthropic"
-    except Exception:
-        pass
+    creds = read_credentials()
+    if creds.get("claudeAiOauth", {}).get("accessToken"):
+        return "anthropic"
     return "other"
 
 
@@ -147,8 +177,7 @@ def fetch_rate_limit():
     Cost: ~$0.0000046 per call (8 input + 1 output tokens at Haiku pricing).
     """
     try:
-        with open(CREDENTIALS_FILE) as f:
-            token = json.load(f)["claudeAiOauth"]["accessToken"]
+        token = read_credentials()["claudeAiOauth"]["accessToken"]
     except Exception:
         return None
 
