@@ -182,7 +182,9 @@ bash uninstall.sh
 - Python 3.10+
 - tmux 3.0+
 - Claude Code
-  - Claude.ai サブスクリプション: 使用率%表示に `~/.claude/.credentials.json` が必要
+  - Claude.ai サブスクリプション: 使用率%表示に OAuth トークンが必要
+    - **Claude Code v1.x**: `~/.claude/.credentials.json` から読み取り
+    - **Claude Code v2+（macOS）**: macOS キーチェーンから自動取得（`"Claude Code-credentials"` サービス）
   - AWS Bedrock / API キー: 資格情報ファイル不要（ローカル JSONL からコスト表示）
 
 ---
@@ -300,7 +302,7 @@ idle 時は古いキャッシュを `[Xm ago]` 付きで表示し、トークン
 |------|-----|-----------|------|
 | `realtime` | `true` / `false` | `false` | Claude の状態に関わらず `cache_ttl` 秒ごとに API ポーリング |
 | `cache_ttl` | 整数（秒） | `300` | キャッシュ有効期間 |
-| `provider` | `"auto"` / `"anthropic"` / `"bedrock"` / `"other"` | `"auto"` | プロバイダを手動指定。`"auto"` は `~/.claude/.credentials.json` で自動判定 |
+| `provider` | `"auto"` / `"anthropic"` / `"bedrock"` / `"other"` | `"auto"` | プロバイダを手動指定。`"auto"` は `~/.claude/.credentials.json` → macOS キーチェーン（v2+）の順で自動判定 |
 
 ### リアルタイムモード（opt-in）
 

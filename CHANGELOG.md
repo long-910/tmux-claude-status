@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.0] - 2026-05-10
+
+### Added
+- **macOS Keychain credentials fallback (Claude Code v2+)**: Claude Code v2.x+ stores
+  OAuth tokens in the macOS Keychain under service `"Claude Code-credentials"` instead of
+  `~/.claude/.credentials.json`. Added `read_credentials()` helper that tries the file
+  first, then falls back to `security find-generic-password` on darwin. Without this,
+  `detect_provider()` always returned `"other"` and rate-limit % display was broken on
+  macOS with Claude Code v2+.
+- **macOS `/Users/` path decoding**: `decode_project_name()` now strips both
+  `home-<user>-` (Linux) and `Users-<user>-` (macOS) prefixes from encoded project folder
+  names, so the dashboard Top Projects section shows readable names on macOS.
+- 6 new unit tests for `read_credentials()` and macOS Keychain fallback; 3 new tests for
+  macOS path decoding — total 108 tests.
+
+---
+
 ## [0.8.0] - 2026-03-09
 
 ### Changed
