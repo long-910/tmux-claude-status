@@ -342,12 +342,13 @@ def decode_project_name(folder_name):
     """Convert Claude Code's encoded project folder name to a human-readable label.
 
     Claude Code stores projects as absolute paths with '/' → '-', e.g.:
-      /home/user/my-project  →  -home-user-my-project
+      /home/user/my-project   →  -home-user-my-project   (Linux)
+      /Users/user/my-project  →  -Users-user-my-project  (macOS)
     """
     name = folder_name.lstrip('-')
     parts = name.split('-')
-    # Strip common 'home-<user>-' prefix so only the project portion remains
-    if len(parts) >= 3 and parts[0] == 'home':
+    # Strip common home-dir prefix so only the project portion remains
+    if len(parts) >= 3 and parts[0] in ('home', 'Users'):
         name = '-'.join(parts[2:])
     return name or folder_name
 

@@ -615,6 +615,22 @@ class TestDecodeProjectName(unittest.TestCase):
         result = cu.decode_project_name("---")
         self.assertIsInstance(result, str)
 
+    # macOS: home dirs live under /Users/<username>/
+    def test_users_prefix_stripped(self):
+        # /Users/user/my-project → -Users-user-my-project → my-project
+        self.assertEqual(cu.decode_project_name("-Users-user-my-project"), "my-project")
+
+    def test_users_deep_path(self):
+        # /Users/user/src/my-app → -Users-user-src-my-app → src-my-app
+        self.assertEqual(cu.decode_project_name("-Users-user-src-my-app"), "src-my-app")
+
+    def test_users_nested_git_path(self):
+        # /Users/long/sb/git/tmux-claude-status → -Users-long-sb-git-tmux-claude-status
+        self.assertEqual(
+            cu.decode_project_name("-Users-long-sb-git-tmux-claude-status"),
+            "sb-git-tmux-claude-status",
+        )
+
 
 class TestProgressBar(unittest.TestCase):
     def test_zero(self):
@@ -666,6 +682,25 @@ class TestLoadJsonlByProject(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             proj_a = os.path.join(tmpdir, "-home-user-proj-a")
             proj_b = os.path.join(tmpdir, "-home-user-proj-b")
+            self._write_jsonl(
+                os.path.join(proj_a, "session.jsonl"),
+                [self._make_record(1), self._make_record(2)],
+            )
+            self._write_jsonl(
+                os.path.join(proj_b, "session.jsonl"),
+                [self._make_record(1)],
+            )
+            with patch.object(cu, "CLAUDE_PROJECTS", tmpdir):
+                result = cu.load_jsonl_records_by_project()
+            self.assertIn("proj-a", result)
+            self.assertIn("proj-b", result)
+            self.assertEqual(len(result["proj-a"]), 2)
+            self.assertEqual(len(result["proj-b"]), 1)
+
+    def test_groups_by_project_macos(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            proj_a = os.path.join(tmpdir, "-Users-user-proj-a")
+            proj_b = os.path.join(tmpdir, "-Users-user-proj-b")
             self._write_jsonl(
                 os.path.join(proj_a, "session.jsonl"),
                 [self._make_record(1), self._make_record(2)],
