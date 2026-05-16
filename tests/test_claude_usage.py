@@ -403,6 +403,72 @@ class TestHas7dLimit(unittest.TestCase):
         self.assertFalse(cu.has_7d_limit(rl))
 
 
+class TestReadCredentials(unittest.TestCase):
+    def _creds(self, token="tok123"):
+        return {"claudeAiOauth": {"accessToken": token}}
+
+    def test_reads_from_file(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(self._creds(), f)
+            fname = f.name
+        try:
+            with patch.object(cu, "CREDENTIALS_FILE", fname):
+                result = cu.read_credentials()
+            self.assertEqual(result["claudeAiOauth"]["accessToken"], "tok123")
+        finally:
+            os.unlink(fname)
+
+    def test_falls_back_to_keychain_on_macos(self):
+        creds_json = json.dumps(self._creds("keychain-token"))
+        mock_result = __import__("unittest.mock", fromlist=["MagicMock"]).MagicMock(
+            returncode=0, stdout=creds_json
+        )
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"), \
+             patch.object(cu.sys, "platform", "darwin"), \
+             patch.object(cu.subprocess, "run", return_value=mock_result) as mock_run:
+            result = cu.read_credentials()
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        self.assertIn("Claude Code-credentials", call_args)
+        self.assertEqual(result["claudeAiOauth"]["accessToken"], "keychain-token")
+
+    def test_no_keychain_fallback_on_non_darwin(self):
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"), \
+             patch.object(cu.sys, "platform", "linux"), \
+             patch.object(cu.subprocess, "run") as mock_run:
+            result = cu.read_credentials()
+        mock_run.assert_not_called()
+        self.assertEqual(result, {})
+
+    def test_file_missing_token_falls_back_to_keychain(self):
+        creds_json = json.dumps(self._creds("keychain-token"))
+        mock_result = __import__("unittest.mock", fromlist=["MagicMock"]).MagicMock(
+            returncode=0, stdout=creds_json
+        )
+        # File exists but has no accessToken
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({"claudeAiOauth": {}}, f)
+            fname = f.name
+        try:
+            with patch.object(cu, "CREDENTIALS_FILE", fname), \
+                 patch.object(cu.sys, "platform", "darwin"), \
+                 patch.object(cu.subprocess, "run", return_value=mock_result):
+                result = cu.read_credentials()
+            self.assertEqual(result["claudeAiOauth"]["accessToken"], "keychain-token")
+        finally:
+            os.unlink(fname)
+
+    def test_keychain_failure_returns_empty(self):
+        mock_result = __import__("unittest.mock", fromlist=["MagicMock"]).MagicMock(
+            returncode=44, stdout=""
+        )
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"), \
+             patch.object(cu.sys, "platform", "darwin"), \
+             patch.object(cu.subprocess, "run", return_value=mock_result):
+            result = cu.read_credentials()
+        self.assertEqual(result, {})
+
+
 class TestDetectProvider(unittest.TestCase):
     def test_auto_with_oauth_returns_anthropic(self):
         creds = {"claudeAiOauth": {"accessToken": "tok123"}}
@@ -416,7 +482,8 @@ class TestDetectProvider(unittest.TestCase):
             os.unlink(fname)
 
     def test_auto_without_credentials_file_returns_other(self):
-        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"):
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"), \
+             patch.object(cu.sys, "platform", "linux"):
             self.assertEqual(cu.detect_provider({"provider": "auto"}), "other")
 
     def test_auto_with_no_oauth_key_returns_other(self):
@@ -425,10 +492,21 @@ class TestDetectProvider(unittest.TestCase):
             json.dump(creds, f)
             fname = f.name
         try:
-            with patch.object(cu, "CREDENTIALS_FILE", fname):
+            with patch.object(cu, "CREDENTIALS_FILE", fname), \
+                 patch.object(cu.sys, "platform", "linux"):
                 self.assertEqual(cu.detect_provider({"provider": "auto"}), "other")
         finally:
             os.unlink(fname)
+
+    def test_auto_keychain_returns_anthropic_on_macos(self):
+        creds_json = json.dumps({"claudeAiOauth": {"accessToken": "tok-from-keychain"}})
+        mock_result = __import__("unittest.mock", fromlist=["MagicMock"]).MagicMock(
+            returncode=0, stdout=creds_json
+        )
+        with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"), \
+             patch.object(cu.sys, "platform", "darwin"), \
+             patch.object(cu.subprocess, "run", return_value=mock_result):
+            self.assertEqual(cu.detect_provider({"provider": "auto"}), "anthropic")
 
     def test_override_anthropic(self):
         with patch.object(cu, "CREDENTIALS_FILE", "/nonexistent/creds.json"):
@@ -615,6 +693,22 @@ class TestDecodeProjectName(unittest.TestCase):
         result = cu.decode_project_name("---")
         self.assertIsInstance(result, str)
 
+    # macOS: home dirs live under /Users/<username>/
+    def test_users_prefix_stripped(self):
+        # /Users/user/my-project → -Users-user-my-project → my-project
+        self.assertEqual(cu.decode_project_name("-Users-user-my-project"), "my-project")
+
+    def test_users_deep_path(self):
+        # /Users/user/src/my-app → -Users-user-src-my-app → src-my-app
+        self.assertEqual(cu.decode_project_name("-Users-user-src-my-app"), "src-my-app")
+
+    def test_users_nested_git_path(self):
+        # /Users/long/sb/git/tmux-claude-status → -Users-long-sb-git-tmux-claude-status
+        self.assertEqual(
+            cu.decode_project_name("-Users-long-sb-git-tmux-claude-status"),
+            "sb-git-tmux-claude-status",
+        )
+
 
 class TestProgressBar(unittest.TestCase):
     def test_zero(self):
@@ -666,6 +760,25 @@ class TestLoadJsonlByProject(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             proj_a = os.path.join(tmpdir, "-home-user-proj-a")
             proj_b = os.path.join(tmpdir, "-home-user-proj-b")
+            self._write_jsonl(
+                os.path.join(proj_a, "session.jsonl"),
+                [self._make_record(1), self._make_record(2)],
+            )
+            self._write_jsonl(
+                os.path.join(proj_b, "session.jsonl"),
+                [self._make_record(1)],
+            )
+            with patch.object(cu, "CLAUDE_PROJECTS", tmpdir):
+                result = cu.load_jsonl_records_by_project()
+            self.assertIn("proj-a", result)
+            self.assertIn("proj-b", result)
+            self.assertEqual(len(result["proj-a"]), 2)
+            self.assertEqual(len(result["proj-b"]), 1)
+
+    def test_groups_by_project_macos(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            proj_a = os.path.join(tmpdir, "-Users-user-proj-a")
+            proj_b = os.path.join(tmpdir, "-Users-user-proj-b")
             self._write_jsonl(
                 os.path.join(proj_a, "session.jsonl"),
                 [self._make_record(1), self._make_record(2)],

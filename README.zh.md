@@ -181,7 +181,9 @@ bash uninstall.sh
 - Python 3.10+
 - tmux 3.0+
 - Claude Code
-  - Claude.ai 订阅：使用率%显示需要 `~/.claude/.credentials.json`
+  - Claude.ai 订阅：使用率%显示需要 OAuth Token
+    - **Claude Code v1.x**：从 `~/.claude/.credentials.json` 读取
+    - **Claude Code v2+（macOS）**：自动从 macOS 钥匙串读取（`"Claude Code-credentials"` 服务）
   - AWS Bedrock / API 密钥：无需凭证文件，从本地 JSONL 显示费用
 
 ---
@@ -299,7 +301,7 @@ AWS Bedrock / API 密钥：
 |----|-----|------|------|
 | `realtime` | `true` / `false` | `false` | 无论 Claude 是否活跃，每 `cache_ttl` 秒轮询 API |
 | `cache_ttl` | 整数（秒） | `300` | 缓存有效期 |
-| `provider` | `"auto"` / `"anthropic"` / `"bedrock"` / `"other"` | `"auto"` | 手动指定提供商。`"auto"` 通过 `~/.claude/.credentials.json` 自动检测 |
+| `provider` | `"auto"` / `"anthropic"` / `"bedrock"` / `"other"` | `"auto"` | 手动指定提供商。`"auto"` 依次检查 `~/.claude/.credentials.json` → macOS 钥匙串（v2+）|
 
 ### 实时模式（可选）
 

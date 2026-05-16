@@ -182,7 +182,9 @@ This removes:
 - Python 3.10+
 - tmux 3.0+
 - Claude Code
-  - Claude.ai subscription: `~/.claude/.credentials.json` required for rate-limit % display
+  - Claude.ai subscription: OAuth token required for rate-limit % display
+    - **Claude Code v1.x**: read from `~/.claude/.credentials.json`
+    - **Claude Code v2+ (macOS)**: read from macOS Keychain automatically (`"Claude Code-credentials"` service)
   - AWS Bedrock / API key: no credentials file needed — cost display from local JSONL
 
 ---
@@ -299,7 +301,7 @@ Edit `~/.claude/tmux-claude-status.json`:
 |-----|--------|---------|-------------|
 | `realtime` | `true` / `false` | `false` | Poll API every `cache_ttl` seconds regardless of Claude activity |
 | `cache_ttl` | integer (seconds) | `300` | Cache TTL |
-| `provider` | `"auto"` / `"anthropic"` / `"bedrock"` / `"other"` | `"auto"` | Override provider detection. `"auto"` checks `~/.claude/.credentials.json` |
+| `provider` | `"auto"` / `"anthropic"` / `"bedrock"` / `"other"` | `"auto"` | Override provider detection. `"auto"` checks `~/.claude/.credentials.json` then macOS Keychain (v2+) |
 
 ### Realtime mode (opt-in)
 

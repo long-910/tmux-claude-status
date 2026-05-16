@@ -38,6 +38,7 @@ Settings: ~/.claude/tmux-claude-status.json
 import json
 import os
 import glob
+import subprocess
 import sys
 import time
 import urllib.request
@@ -56,7 +57,7 @@ DEFAULT_SETTINGS = {"realtime": False, "cache_ttl": 300, "provider": "auto"}
 PRICING = {"input": 3.00, "output": 15.00, "cache_read": 0.30, "cache_create": 3.75}
 
 DASH_WIDTH = 78  # inner width between '+' delimiters (total box = 80 cols)
-VERSION    = "0.8.0"
+VERSION    = "0.9.0"
 
 
 # -- Settings -----------------------------------------------------------------
@@ -67,6 +68,39 @@ def load_settings():
             return {**DEFAULT_SETTINGS, **json.load(f)}
     except Exception:
         return dict(DEFAULT_SETTINGS)
+
+
+def read_credentials():
+    """Return parsed credentials dict.
+
+    Priority:
+      1. ~/.claude/.credentials.json  (all platforms, Claude Code v1.x)
+      2. macOS Keychain "Claude Code-credentials" (macOS, Claude Code v2+)
+    Returns an empty dict if neither source yields a valid token.
+    """
+    try:
+        with open(CREDENTIALS_FILE) as f:
+            creds = json.load(f)
+        if creds.get("claudeAiOauth", {}).get("accessToken"):
+            return creds
+    except Exception:
+        pass
+
+    if sys.platform == "darwin":
+        try:
+            result = subprocess.run(
+                ["security", "find-generic-password",
+                 "-s", "Claude Code-credentials",
+                 "-a", os.environ.get("USER", ""),
+                 "-w"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode == 0:
+                return json.loads(result.stdout.strip())
+        except Exception:
+            pass
+
+    return {}
 
 
 def detect_provider(settings):
@@ -82,13 +116,9 @@ def detect_provider(settings):
     if override != "auto":
         return "anthropic" if override == "anthropic" else "other"
 
-    try:
-        with open(CREDENTIALS_FILE) as f:
-            creds = json.load(f)
-        if creds.get("claudeAiOauth", {}).get("accessToken"):
-            return "anthropic"
-    except Exception:
-        pass
+    creds = read_credentials()
+    if creds.get("claudeAiOauth", {}).get("accessToken"):
+        return "anthropic"
     return "other"
 
 
@@ -147,8 +177,7 @@ def fetch_rate_limit():
     Cost: ~$0.0000046 per call (8 input + 1 output tokens at Haiku pricing).
     """
     try:
-        with open(CREDENTIALS_FILE) as f:
-            token = json.load(f)["claudeAiOauth"]["accessToken"]
+        token = read_credentials()["claudeAiOauth"]["accessToken"]
     except Exception:
         return None
 
@@ -342,12 +371,13 @@ def decode_project_name(folder_name):
     """Convert Claude Code's encoded project folder name to a human-readable label.
 
     Claude Code stores projects as absolute paths with '/' → '-', e.g.:
-      /home/user/my-project  →  -home-user-my-project
+      /home/user/my-project   →  -home-user-my-project   (Linux)
+      /Users/user/my-project  →  -Users-user-my-project  (macOS)
     """
     name = folder_name.lstrip('-')
     parts = name.split('-')
-    # Strip common 'home-<user>-' prefix so only the project portion remains
-    if len(parts) >= 3 and parts[0] == 'home':
+    # Strip common home-dir prefix so only the project portion remains
+    if len(parts) >= 3 and parts[0] in ('home', 'Users'):
         name = '-'.join(parts[2:])
     return name or folder_name
 
